@@ -13,7 +13,7 @@ import booksRouter from "./routes/books.js";
 const app = express();
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/books')
+mongoose.connect(process.env.DATABASE_URL || 'mongodb://localhost:27017/books')
   .then(() => {
     console.log('Connected to MongoDB');
   })
