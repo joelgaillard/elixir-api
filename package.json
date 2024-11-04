@@ -1,5 +1,5 @@
 {
-  "name": "essai-express",
+  "name": "elixir",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,9 +8,14 @@
     "dev": "nodemon"
   },
   "dependencies": {
+    "bcrypt": "^5.1.1",
+    "csurf": "^1.10.0",
     "debug": "^4.3.4",
+    "dotenv": "^16.4.5",
     "express": "^4.21.0",
+    "express-validator": "^7.2.0",
     "http-errors": "^2.0.0",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.7.0",
     "morgan": "^1.10.0"
   }
