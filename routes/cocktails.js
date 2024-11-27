@@ -1,207 +1,340 @@
-import express from 'express';
-import CocktailRecipe from '../models/cocktailRecipe.js';
-import { body, validationResult, query } from 'express-validator';
-import verifyToken from '../middlewares/verifyToken.js';
-import verifyRole from '../middlewares/verifyRole.js';
+import express from "express";
+import Cocktail from "../models/cocktail.js";
+import verifyRole from "../middlewares/verifyRole.js";
+import verifyToken from "../middlewares/verifyToken.js";
+import verifyCreator from "../middlewares/verifyCreator.js";
+import { body, validationResult } from 'express-validator';
+
 
 const router = express.Router();
 
 /**
- * @api {post} /cocktails Ajouter une nouvelle recette de cocktail
- * @apiName AddCocktail
- * @apiGroup Cocktails
- * @apiPermission manager, admin
- *
- * @apiHeader {String} Authorization Token JWT de l'utilisateur.
- *
- * @apiBody {String} name Nom du cocktail.
- * @apiBody {String[]} ingredients Liste des ingrédients.
- * @apiBody {String} instructions Instructions pour préparer le cocktail.
- * @apiBody {String} alcoholType Type d'alcool (vodka, gin, whiskey, etc.).
- * @apiBody {Number} [rating] Note du cocktail (entre 1 et 5).
- *
- * @apiSuccess {String} message Message de succès.
- * @apiSuccess {Object} recipe Objet de la recette ajoutée.
- *
- * @apiError {String} message Message d'erreur.
- */
-
-router.post('/',
-  verifyToken,
-  verifyRole('manager', 'admin'),
-  [
-    body('name').notEmpty().withMessage('Le nom du cocktail est obligatoire'),
-    body('ingredients').isArray({ min: 1 }).withMessage('Au moins un ingrédient est requis'),
-    body('instructions').notEmpty().withMessage('Les instructions sont obligatoires'),
-    body('alcoholType').notEmpty().withMessage('Le type d\'alcool est requis'),
-    body('rating').optional().isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5')
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
-    const { name, ingredients, instructions, alcoholType, rating } = req.body;
-    try {
-      const recipe = new CocktailRecipe({
-        name,
-        ingredients,
-        instructions,
-        alcoholType,
-        rating,
-        createdBy: req.user.id
-      });
-      await recipe.save();
-      res.status(201).json({ message: 'Recette ajoutée avec succès', recipe });
-    } catch (err) {
-      console.error('Erreur lors de l\'ajout de la recette:', err);
-      res.status(500).json({ message: 'Erreur interne du serveur' });
-    }
-  }
-);
-
-/**
- * @api {get} /cocktails Lister les recettes de cocktails
+ * @api {get} /cocktails Liste tous les cocktails
  * @apiName GetCocktails
  * @apiGroup Cocktails
+ * 
+ * @apiQuery {String} [name] Filtrer par nom
+ * @apiQuery {String} [ingredient] Filtrer par ingrédient
+ * @apiQuery {String} [sort=rank] Trier par (name, rank)
  *
- * @apiQuery {String} [alcoholType] Type d'alcool pour filtrer les recettes.
- * @apiQuery {String} [name] Nom du cocktail pour la recherche partielle.
- * @apiQuery {Number} [rating] Note de la recette pour filtrer.
- * @apiQuery {Number} [page=1] Numéro de la page pour la pagination.
- * @apiQuery {Number} [limit=10] Limite d'éléments par page.
- *
- * @apiSuccess {Object[]} recipes Liste des recettes.
- * @apiSuccess {Number} total Nombre total de recettes trouvées.
- * @apiSuccess {Number} page Page actuelle.
- * @apiSuccess {Number} totalPages Nombre total de pages.
- *
- * @apiError {String} message Message d'erreur.
+ * @apiSuccess {Object[]} cocktails Liste des cocktails
+ * @apiSuccess {String} cocktails._id Identifiant unique
+ * @apiSuccess {String} cocktails.name Nom du cocktail
+ * @apiSuccess {String} cocktails.description Description du cocktail
+ * @apiSuccess {String[]} cocktails.instructions Liste des étapes de préparation
+ * @apiSuccess {String} cocktails.image_url URL de l'image
+ * @apiSuccess {Object[]} cocktails.ingredients Liste des ingrédients
+ * @apiSuccess {Number} cocktails.rank Note moyenne
+ * 
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     [{
+ *       "_id": "64e6f2f01ab9c8e1a42c3f01",
+ *       "name": "Mojito",
+ *       "description": "Cocktail cubain rafraîchissant",
+ *       "instructions": ["Écraser les feuilles de menthe...", "Ajouter le rhum..."],
+ *       "image_url": "https://example.com/mojito.jpg",
+ *       "ingredients": [
+ *         {
+ *           "ingredient": "Rhum blanc",
+ *           "quantity": 50,
+ *           "unit": "ml"
+ *         }
+ *       ],
+ *       "rank": 4.5
+ *     }]
  */
-router.get('/', [
-    query('alcoholType').optional().isString(),
-    query('name').optional().isString(),
-    query('rating').optional().isInt({ min: 1, max: 5 }),
-    query('page').optional().isInt({ min: 1 }).withMessage('La page doit être supérieure ou égale à 1'),
-    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('La limite doit être entre 1 et 100')
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
-    const { alcoholType, name, rating, page = 1, limit = 10 } = req.query;
-    const filters = {};
-    if (alcoholType) filters.alcoholType = alcoholType;
-    if (name) filters.name = new RegExp(name, 'i'); // recherche partielle insensible à la casse
-    if (rating) filters.rating = rating;
-
-    try {
-      const recipes = await CocktailRecipe.find(filters)
-        .skip((page - 1) * limit)
-        .limit(Number(limit));
-
-      const total = await CocktailRecipe.countDocuments(filters);
-      res.json({ recipes, total, page: Number(page), totalPages: Math.ceil(total / limit) });
-    } catch (err) {
-      console.error('Erreur lors de la récupération des recettes:', err);
-      res.status(500).json({ message: 'Erreur interne du serveur' });
-    }
-  }
-);
-
-/**
- * @api {get} /cocktails/:id Consulter une recette de cocktail par ID
- * @apiName GetCocktailById
- * @apiGroup Cocktails
- *
- * @apiParam {String} id ID unique de la recette.
- *
- * @apiSuccess {Object} recipe Détails de la recette.
- *
- * @apiError {String} message Message d'erreur.
- */
-router.get('/:id', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
-    const recipe = await CocktailRecipe.findById(req.params.id);
-    if (!recipe) return res.status(404).json({ message: 'Recette non trouvée' });
-    res.json(recipe);
+    const cocktails = await Cocktail.find()
+      .select("name description instructions image_url ingredients rank")
+      .exec();
+    res.status(200).json(cocktails);
   } catch (err) {
-    console.error('Erreur lors de la récupération de la recette:', err);
-    res.status(500).json({ message: 'Erreur interne du serveur' });
+    res.status(500).json({ error: err.message });
   }
 });
 
 /**
- * @api {put} /cocktails/:id Modifier une recette de cocktail
- * @apiName UpdateCocktail
+ * @api {get} /cocktails/:id Récupère un cocktail
+ * @apiName GetCocktail
  * @apiGroup Cocktails
- * @apiPermission user
  *
- * @apiHeader {String} Authorization Token JWT de l'utilisateur.
+ * @apiParam {String} id Identifiant unique du cocktail
  *
- * @apiParam {String} id ID unique de la recette.
+ * @apiSuccess {String} _id Identifiant unique
+ * @apiSuccess {String} name Nom du cocktail
+ * @apiSuccess {String} description Description du cocktail
+ * @apiSuccess {String[]} instructions Liste des étapes de préparation
+ * @apiSuccess {String} image_url URL de l'image
+ * @apiSuccess {Object[]} ingredients Liste des ingrédients
+ * @apiSuccess {Number} rank Note moyenne
  *
- * @apiBody {String} [name] Nom du cocktail.
- * @apiBody {String[]} [ingredients] Liste des ingrédients.
- * @apiBody {String} [instructions] Instructions pour préparer le cocktail.
- * @apiBody {String} [alcoholType] Type d'alcool.
- * @apiBody {Number} [rating] Note du cocktail.
- *
- * @apiSuccess {String} message Message de succès.
- * @apiSuccess {Object} recipe Objet de la recette mise à jour.
- *
- * @apiError {String} message Message d'erreur.
+ * @apiError (404) {String} message Cocktail non trouvé
+ * 
+ * @apiErrorExample {json} Error-Response:
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "message": "Cocktail non trouvé"
+ *     }
  */
-router.put('/:id',
+router.get("/:id", async (req, res) => {
+  try {
+    const cocktail = await Cocktail.findById(req.params.id)
+    .select("name description instructions image_url ingredients rank")
+          .exec();
+
+    if (!cocktail) {
+      return res.status(404).json({ message: "Cocktail non trouvé" });
+    }
+    res.status(200).json(cocktail);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @api {post} /cocktails Créer un cocktail
+ * @apiName CreateCocktail
+ * @apiGroup Cocktails
+ * 
+ * @apiPermission admin, manager
+ * 
+ * @apiHeader {String} Authorization Token JWT (Bearer token)
+ *
+ * @apiBody {String} name Nom du cocktail (3-100 caractères)
+ * @apiBody {String} description Description du cocktail (10-500 caractères)
+ * @apiBody {String[]} instructions Liste des étapes de préparation
+ * @apiBody {String} image_url URL de l'image
+ * @apiBody {Object[]} ingredients Liste des ingrédients
+ * @apiBody {String} ingredients.ingredient Nom de l'ingrédient
+ * @apiBody {Number} ingredients.quantity Quantité de l'ingrédient
+ * @apiBody {String} [ingredients.unit] Unité de mesure (optionnelle)
+ *
+ * @apiSuccess {String} _id Identifiant unique
+ * @apiSuccess {String} name Nom du cocktail
+ * @apiSuccess {String} description Description du cocktail
+ * @apiSuccess {String[]} instructions Liste des étapes de préparation
+ * @apiSuccess {String} image_url URL de l'image
+ * @apiSuccess {Object[]} ingredients Liste des ingrédients
+ * @apiSuccess {String} createdBy ID du créateur
+ * @apiSuccess {Date} createdAt Date de création
+ *
+ * @apiError (400) {Object[]} errors Liste des erreurs de validation
+ * @apiError (401) {String} message Token manquant ou invalide
+ * @apiError (403) {String} message Rôle insuffisant (manager ou admin requis)
+ *
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 201 Created
+ *     {
+ *       "_id": "64e6f2f01ab9c8e1a42c3f01",
+ *       "name": "Mojito",
+ *       "description": "Cocktail cubain rafraîchissant",
+ *       "instructions": ["Écraser les feuilles de menthe...", "Ajouter le rhum..."],
+ *       "image_url": "https://example.com/mojito.jpg",
+ *       "ingredients": [
+ *         {
+ *           "ingredient": "Rhum blanc",
+ *           "quantity": 50,
+ *           "unit": "ml"
+ *         }
+ *       ],
+ *       "createdBy": "64e6f2f01ab9c8e1a42c3f00",
+ *       "createdAt": "2024-03-14T12:00:00.000Z"
+ *     }
+ *
+ * @apiErrorExample {json} Error-Response:
+ *     HTTP/1.1 400 Bad Request
+ *     {
+ *       "errors": [{
+ *         "msg": "Le nom du cocktail est obligatoire",
+ *         "param": "name",
+ *         "location": "body"
+ *       }]
+ *     }
+ */
+router.post(
+  '/',
   verifyToken,
   verifyRole('manager', 'admin'),
   [
-    body('name').optional().notEmpty().withMessage('Le nom du cocktail est obligatoire'),
-    body('ingredients').optional().isArray({ min: 1 }).withMessage('Au moins un ingrédient est requis'),
-    body('instructions').optional().notEmpty().withMessage('Les instructions sont obligatoires'),
-    body('alcoholType').optional().notEmpty().withMessage('Le type d\'alcool est requis'),
-    body('rating').optional().isInt({ min: 1, max: 5 }).withMessage('La note doit être entre 1 et 5')
+    body('name')
+      .isLength({ min: 3, max: 100 })
+      .withMessage('Le nom doit contenir entre 3 et 100 caractères'),
+    body('description')
+      .isLength({ min: 10, max: 1000 })
+      .withMessage('La description doit contenir entre 10 et 1000 caractères'),
+    body('instructions')
+      .isArray({ min: 1 })
+      .withMessage('Les instructions doivent contenir au moins une étape'),
+    body('image_url')
+      .isURL()
+      .withMessage('L\'URL de l\'image n\'est pas valide'),
+    body('ingredients')
+      .isArray({ min: 1 })
+      .withMessage('Les ingrédients doivent contenir au moins un élément'),
+    body('ingredients.*.name')
+      .notEmpty()
+      .withMessage('Le nom de l\'ingrédient est obligatoire'),
+    body('ingredients.*.quantity')
+      .notEmpty()
+      .withMessage('La quantité de l\'ingrédient est obligatoire')
   ],
+
   async (req, res) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { name, description, instructions, image_url, ingredients } = req.body;
+    const createdBy = req.user.id;
 
     try {
-      const recipe = await CocktailRecipe.findOneAndUpdate(
-        { _id: req.params.id, createdBy: req.user.id },
-        { ...req.body },
-        { new: true }
-      );
-      if (!recipe) return res.status(404).json({ message: 'Recette non trouvée ou non autorisée' });
-      res.json({ message: 'Recette modifiée avec succès', recipe });
+      const newCocktail = new Cocktail({
+        name,
+        description,
+        instructions,
+        image_url,
+        ingredients,
+        createdBy
+      });
+
+      await newCocktail.save();
+      res.status(201).json(newCocktail);
     } catch (err) {
-      console.error('Erreur lors de la mise à jour de la recette:', err);
+      console.error('Erreur lors de la création du cocktail:', err);
       res.status(500).json({ message: 'Erreur interne du serveur' });
     }
   }
 );
 
 /**
- * @api {delete} /cocktails/:id Supprimer une recette de cocktail
+ * @api {patch} /cocktails/:id Modifier un cocktail
+ * @apiName UpdateCocktail
+ * @apiGroup Cocktails
+ * @apiPermission admin, manager (créateur du cocktail uniquement)
+ *
+ * @apiHeader {String} Authorization Token JWT (Bearer token)
+ * 
+ * @apiParam {String} id Identifiant unique du cocktail
+ *
+ * @apiBody {String} [name] Nom du cocktail (3-100 caractères)
+ * @apiBody {String} [description] Description du cocktail (10-500 caractères)
+ * @apiBody {String[]} [instructions] Liste des étapes de préparation
+ * @apiBody {String} [image_url] URL de l'image
+ * @apiBody {Object[]} [ingredients] Liste des ingrédients
+ * @apiBody {Boolean} [replaceIngredients] Remplacer (true) ou ajouter (false) les ingrédients
+ *
+ * @apiSuccess {String} _id Identifiant unique
+ * @apiSuccess {String} name Nom du cocktail
+ * @apiSuccess {String} description Description du cocktail
+ * @apiSuccess {String[]} instructions Liste des étapes de préparation
+ * @apiSuccess {String} image_url URL de l'image
+ * @apiSuccess {Object[]} ingredients Liste des ingrédients mise à jour
+ *
+ * @apiError (400) {Object[]} errors Liste des erreurs de validation
+ * @apiError (401) {String} message Token manquant ou invalide
+ * @apiError (403) {String} message Accès refusé (créateur ou admin uniquement)
+ * @apiError (404) {String} message Cocktail non trouvé
+ *
+ * @apiErrorExample {json} Error-Response:
+ *     HTTP/1.1 403 Forbidden
+ *     {
+ *       "message": "Accès refusé : vous n'êtes pas le créateur de ce cocktail"
+ *     }
+ */
+router.patch(
+  '/:id',
+  verifyToken, // Middleware pour vérifier le token JWT
+  verifyRole('manager', 'admin'), // Middleware pour vérifier le rôle de l'utilisateur
+  verifyCreator('cocktail'), // Middleware pour vérifier le créateur du cocktail
+  [
+    body('name').optional().isLength({ min: 3, max: 100 }).withMessage('Le nom du cocktail doit avoir entre 3 et 100 caractères'),
+    body('description').optional().isLength({ min: 10, max: 500 }).withMessage('La description doit avoir entre 10 et 500 caractères'),
+    body('instructions').optional().isArray({ min: 1 }).withMessage('Les instructions doivent être un tableau de chaînes de caractères'),
+    body('image_url').optional().isURL().withMessage('URL de l\'image invalide'),
+    body('ingredients').optional().isArray({ min: 1 }).withMessage('Les ingrédients doivent être un tableau contenant au moins un élément'),
+    body('ingredients.*.ingredient').optional().notEmpty().withMessage('Le nom de l\'ingrédient est obligatoire'),
+    body('ingredients.*.quantity').optional().notEmpty().withMessage('La quantité de l\'ingrédient est obligatoire'),
+    body('replaceIngredients').optional().isBoolean().withMessage('Le paramètre replaceIngredients doit être un booléen')
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const updateData = {};
+    const { name, description, instructions, image_url, ingredients, replaceIngredients } = req.body;
+
+    if (name) updateData.name = name;
+    if (description) updateData.description = description;
+    if (instructions) updateData.instructions = instructions;
+    if (image_url) updateData.image_url = image_url;
+
+    try {
+      const cocktail = await Cocktail.findById(req.params.id);
+      if (!cocktail) {
+        return res.status(404).json({ message: "Cocktail non trouvé" });
+      }
+
+      if (ingredients) {
+        if (!!replaceIngredients) {
+          cocktail.ingredients = ingredients; // Remplacer le tableau d'ingrédients
+        } else {
+          cocktail.ingredients.push(...ingredients); // Ajouter les nouveaux ingrédients au tableau existant
+        }
+      }
+
+      Object.assign(cocktail, updateData);
+
+      await cocktail.save();
+
+      res.status(200).json(cocktail);
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour du cocktail:', err);
+      res.status(500).json({ message: 'Erreur interne du serveur' });
+    }
+  }
+);
+
+
+/**
+ * @api {delete} /cocktails/:id Supprimer un cocktail
  * @apiName DeleteCocktail
  * @apiGroup Cocktails
- * @apiPermission user
  *
- * @apiHeader {String} Authorization Token JWT de l'utilisateur.
+ * @apiHeader {String} Authorization Token JWT (Bearer token)
+ * 
+ * @apiParam {String} id Identifiant unique du cocktail
  *
- * @apiParam {String} id ID unique de la recette.
+ * @apiSuccess {String} message Message de confirmation
  *
- * @apiSuccess {String} message Message de succès.
+ * @apiError (401) {String} message Token manquant ou invalide
+ * @apiError (403) {String} message Accès refusé (créateur ou admin uniquement)
+ * @apiError (404) {String} message Cocktail non trouvé
  *
- * @apiError {String} message Message d'erreur.
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "message": "Cocktail supprimé avec succès"
+ *     }
  */
-router.delete('/:id', verifyToken, verifyRole('manager', 'admin'), async (req, res) => {
+router.delete("/:id",
+  verifyToken, // Middleware pour vérifier le token JWT
+  verifyRole('manager', 'admin'), // Middleware pour vérifier le rôle de l'utilisateur
+  verifyCreator('cocktail'), // Middleware pour vérifier le créateur du cocktail
+ async (req, res) => {
   try {
-    const recipe = await CocktailRecipe.findOneAndDelete({ _id: req.params.id, createdBy: req.user.id });
-    if (!recipe) return res.status(404).json({ message: 'Recette non trouvée ou non autorisée' });
-    res.json({ message: 'Recette supprimée avec succès' });
+    const deletedCocktail = await Cocktail.findByIdAndDelete(req.params.id);
+
+    if (!deletedCocktail) {
+      return res.status(404).json({ message: "Cocktail non trouvé" });
+    }
+    res.status(200).json({ message: "Cocktail supprimé avec succès" });
   } catch (err) {
-    console.error('Erreur lors de la suppression de la recette:', err);
-    res.status(500).json({ message: 'Erreur interne du serveur' });
+    res.status(500).json({ error: err.message });
   }
 });
 

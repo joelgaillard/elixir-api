@@ -79,11 +79,11 @@ function generateToken(user) {
  */
 router.post(
   '/',
-  optionalAuth, // Middleware pour vérification optionnelle du token JWT
+  optionalAuth,
   [
-    body('username').notEmpty().withMessage('Le nom d\'utilisateur est obligatoire').isLength({ min: 3, max: 30 }),
+    body('username').isLength({ min: 3, max: 30 }).withMessage('Le nom d\'utilisateur doit contenir entre 3 et 30 caractères').matches(/^[a-zA-Z0-9_]+$/).withMessage('Le nom d\'utilisateur ne doit contenir que des lettres, des chiffres et des underscores'),
     body('email').isEmail().withMessage('Adresse e-mail invalide').normalizeEmail(),
-    body('password').isLength({ min: 6 }).withMessage('Mot de passe trop court')
+    body('password').isLength({ min: 8 }).withMessage('Le mot de passe doit contenir au moins 8 caractères').matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/).withMessage('Le mot de passe doit contenir au moins une lettre minuscule, une lettre majuscule, un chiffre et un caractère spécial')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -184,12 +184,33 @@ router.post(
  *     }
  */
 router.post('/login', [
+  // email requis
   body('email').isEmail().withMessage('Adresse e-mail invalide').normalizeEmail(),
-  body('password').notEmpty().withMessage('Le mot de passe est requis').isLength({ min: 8 }).withMessage('Le mot de passe doit contenir au moins 8 caractères'),
+  body('password').isLength({ min: 1 }).withMessage('Le mot de passe est requis'),
+  // dire si les identifiants sont invalides
+  body('email').custom(async (email, { req }) => {
+    const user
+      = await
+      User
+        .findOne({ email });
+    if (!user) {
+      return Promise.reject('Identifiants invalides');
+    }
+  }),
+  body('password').custom(async (password, { req }) => {
+    const user
+      = await
+      User
+        .findOne({ email: req.body.email });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return Promise.reject('Identifiants invalides');
+    }
+  })
+
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ message: errors.array()[0].msg });
   }
 
   const { email, password } = req.body;
@@ -369,6 +390,62 @@ router.delete('/:id', verifyToken, async (req, res) => {
   } catch (err) {
     console.error('Erreur lors de la suppression de l\'utilisateur:', err);
     res.status(400).json({ message: 'Erreur lors de la suppression de l\'utilisateur' });
+  }
+});
+
+
+
+router.post('/:id/favorites/:cocktailId', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    
+    // Vérifier que l'utilisateur modifie ses propres favoris
+    if (req.user.id !== req.params.id) {
+      return res.status(403).json({ message: 'Non autorisé' });
+    }
+
+    if (!user.favorites.includes(req.params.cocktailId)) {
+      user.favorites.push(req.params.cocktailId);
+      await user.save();
+    }
+
+    res.status(200).json(user.favorites);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
+router.delete('/:id/favorites/:cocktailId', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+
+    if (req.user.id !== req.params.id) {
+      return res.status(403).json({ message: 'Non autorisé' });
+    }
+
+    user.favorites = user.favorites.filter(id => id.toString() !== req.params.cocktailId);
+    await user.save();
+
+    res.status(200).json(user.favorites);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
+router.get('/:id/favorites', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).populate('favorites');
+    if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+
+    res.status(200).json(user.favorites);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
