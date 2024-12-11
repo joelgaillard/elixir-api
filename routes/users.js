@@ -38,7 +38,7 @@ function generateToken(user) {
  *     }
  *
  * @apiSuccess {String} message Message de succès (par exemple, "Utilisateur créé avec succès").
- * @apiSuccess {String} [token] Jeton JWT (uniquement pour les utilisateurs non-admins).
+ * @apiSuccess {String} [token] Jeton JWT de connexion (uniquement pour les utilisateurs).
  *
  * @apiSuccessExample {json} Réponse en cas de succès (utilisateur):
  *     HTTP/1.1 201 Created
@@ -52,27 +52,14 @@ function generateToken(user) {
  *       "message": "Manager créé avec succès"
  *     }
  *
- * @apiError (400) {String} message Cette adresse e-mail est déjà utilisée.
- * @apiErrorExample {json} Réponse si l'e-mail est déjà utilisé :
- *     HTTP/1.1 400 Bad Request
- *     {
- *       "message": "Cette adresse e-mail est déjà utilisée"
- *     }
- *
- * @apiError (400) {String} message Ce nom d'utilisateur est déjà pris.
- * @apiErrorExample {json} Réponse si le nom d'utilisateur est déjà utilisé :
- *     HTTP/1.1 400 Bad Request
- *     {
- *       "message": "Ce nom d'utilisateur est déjà pris"
- *     }
- *
  * @apiError (400) {Object[]} errors Erreurs de validation des champs envoyés.
  * @apiErrorExample {json} Erreurs de validation :
  *     HTTP/1.1 400 Bad Request
  *     {
  *       "errors": [
- *         { "msg": "Le nom d'utilisateur doit contenir entre 3 et 30 caractères", "param": "username", "location": "body" },
- *         { "msg": "Adresse e-mail invalide", "param": "email", "location": "body" }
+ *         { "msg": "Le nom d'utilisateur doit contenir entre 3 et 30 caractères", "field": "username" },
+ *         { "msg": "Le nom d'utilisateur ne doit contenir que des lettres, des chiffres et des underscores", "field": "username" },
+ *         { "msg": "Le mot de passe doit contenir au moins une lettre minuscule, une lettre majuscule, un chiffre et un caractère spécial", "field": "password" }
  *       ]
  *     }
  */
@@ -81,14 +68,25 @@ router.post(
   '/',
   optionalAuth,
   [
-    body('username').isLength({ min: 3, max: 30 }).withMessage('Le nom d\'utilisateur doit contenir entre 3 et 30 caractères').matches(/^[a-zA-Z0-9_]+$/).withMessage('Le nom d\'utilisateur ne doit contenir que des lettres, des chiffres et des underscores'),
-    body('email').isEmail().withMessage('Adresse e-mail invalide').normalizeEmail(),
-    body('password').isLength({ min: 8 }).withMessage('Le mot de passe doit contenir au moins 8 caractères').matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/).withMessage('Le mot de passe doit contenir au moins une lettre minuscule, une lettre majuscule, un chiffre et un caractère spécial')
+    body('username')
+      .isLength({ min: 3, max: 30 })
+      .withMessage('Le nom d\'utilisateur doit contenir entre 3 et 30 caractères')
+      .matches(/^[a-zA-Z0-9_]+$/)
+      .withMessage('Le nom d\'utilisateur ne doit contenir que des lettres, des chiffres et des underscores'),
+    body('email')
+      .isEmail()
+      .withMessage('Adresse e-mail invalide')
+      .normalizeEmail(),
+    body('password')
+      .isLength({ min: 8 })
+      .withMessage('Le mot de passe doit contenir au moins 8 caractères')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/)
+      .withMessage('Le mot de passe doit contenir au moins une lettre minuscule, une lettre majuscule, un chiffre et un caractère spécial')
   ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ errors: errors.array().map(error => ({ msg: error.msg, field: error.path })) });
     }
 
     const { username, email, password } = req.body;
@@ -98,12 +96,12 @@ router.post(
     try {
       const existingUserByEmail = await User.findOne({ email });
       if (existingUserByEmail) {
-        return res.status(400).json({ message: 'Cette adresse e-mail est déjà utilisée' });
+        return res.status(400).json({ errors: [{ msg: 'Cette adresse e-mail est déjà utilisée', field: 'email' }] });
       }
 
       const existingUserByUsername = await User.findOne({ username });
       if (existingUserByUsername) {
-        return res.status(400).json({ message: 'Ce nom d\'utilisateur est déjà pris' });
+        return res.status(400).json({ errors: [{ msg: 'Ce nom d\'utilisateur est déjà pris', field: 'username' }] });
       }
 
       const hashedPassword = await bcrypt.hash(password, 12);
@@ -129,7 +127,6 @@ router.post(
       }
 
       res.status(201).json({ message: 'Utilisateur créé avec succès', token });
-
 
     } catch (err) {
       console.error('Erreur lors de la création:', err);
@@ -163,19 +160,17 @@ router.post(
  *       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *     }
  *
- * @apiError (400) {String} message Identifiants invalides ou manquants.
- * @apiErrorExample {json} Réponse en cas d'identifiants invalides :
+ * @apiError (400) {Object[]} errors Erreurs de validation des champs envoyés.
+ * @apiErrorExample {json} Erreurs de validation :
  *     HTTP/1.1 400 Bad Request
  *     {
- *       "message": "Identifiants invalides"
+ *       "errors": [
+ *         { "msg": "Le nom d'utilisateur doit contenir entre 3 et 30 caractères", "field": "username" },
+ *         { "msg": "Le nom d'utilisateur ne doit contenir que des lettres, des chiffres et des underscores", "field": "username" },
+ *         { "msg": "Le mot de passe doit contenir au moins une lettre minuscule, une lettre majuscule, un chiffre et un caractère spécial", "field": "password" }
+ *       ]
  *     }
  *
- * @apiError (500) {String} message Erreur interne du serveur.
- * @apiErrorExample {json} Réponse en cas d'erreur serveur :
- *     HTTP/1.1 500 Internal Server Error
- *     {
- *       "message": "Erreur interne du serveur"
- *     }
  */
 
 router.post('/login', [
@@ -184,14 +179,16 @@ router.post('/login', [
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ message: errors.array()[0].msg });
+    return res.status(400).json({ errors: errors.array().map(error => ({ msg: error.msg, field: error.path })) });
   }
+
+
 
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(400).json({ message: 'Identifiants invalides' });
+      return res.status(400).json({ errors: [{ msg: 'Identifiants invalides', field: 'email' }, { msg: 'Identifiants invalides', field: 'password' } ] });
     }
 
     const token = generateToken(user);
