@@ -3,13 +3,13 @@ import validator from 'validator';
 
 const ingredientSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
-  quantity: { type: String, required: true, trim: true }
+  quantity: { type: Number, required: true, trim: true },
+  unit: { type: String, trim: true }
 }, { _id: false });
 
 const ratingSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   rating: { type: Number, required: true, min: 1, max: 5 },
-  comment: { type: String, trim: true }
 }, { _id: false });
 
 const cocktailSchema = new mongoose.Schema(

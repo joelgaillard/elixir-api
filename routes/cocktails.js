@@ -4,6 +4,7 @@ import verifyRole from "../middlewares/verifyRole.js";
 import verifyToken from "../middlewares/verifyToken.js";
 import verifyCreator from "../middlewares/verifyCreator.js";
 import { body, validationResult } from 'express-validator';
+import mongoose from 'mongoose';
 
 
 const router = express.Router();
@@ -44,14 +45,53 @@ const router = express.Router();
  *       "rank": 4.5
  *     }]
  */
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const cocktails = await Cocktail.find()
-      .select("name description instructions image_url ingredients rank")
+    const { name, ingredient, sort = 'rank', page = 1 } = req.query;
+    const limit = 5;
+    const skip = (page - 1) * limit;
+    let query = {};
+
+    // Filtrer par nom (recherche insensible à la casse)
+    if (name) {
+      query.name = { $regex: name, $options: 'i' };
+    }
+
+    // Filtrer par ingrédient
+    if (ingredient) {
+      query['ingredients.name'] = { $regex: ingredient, $options: 'i' };
+    }
+
+    // Définir l'ordre de tri
+    const sortOption = {};
+    if (sort === 'name') {
+      sortOption.name = 1;
+    } else if (sort === 'rank') {
+      sortOption.rank = -1;
+    }
+
+    // Compter le nombre total de cocktails pour la pagination
+    const total = await Cocktail.countDocuments(query);
+    
+    // Récupérer les cocktails paginés
+    const cocktails = await Cocktail.find(query)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit)
       .exec();
-    res.status(200).json(cocktails);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    res.json({
+      cocktails,
+      pagination: {
+        page: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -337,5 +377,76 @@ router.delete("/:id",
     res.status(500).json({ error: err.message });
   }
 });
+
+/**
+ * @api {post} /cocktails/:id/rate Noter un cocktail
+ * @apiName RateCocktail
+ * @apiGroup Cocktails
+ * @apiDescription Permet de noter un cocktail par son ID.
+ *
+ * @apiParam {String} id ID unique du cocktail.
+ * @apiBody {Number} rating Note du cocktail (1-5).
+ *
+ * @apiSuccess {String} message "Note ajoutée avec succès".
+ * @apiSuccess {Object} cocktail Détails du cocktail noté.
+ *
+ * @apiSuccessExample {json} Réponse en cas de succès :
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "message": "Note ajoutée avec succès",
+ *       "cocktail": {
+ *         "_id": "60c72b2f9b1d8c001c8e4b8a",
+ *         "name": "Mojito",
+ *         "rank": 4.5,
+ *         // autres champs du cocktail
+ *       }
+ *     }
+ */
+router.post('/:id/rate', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating } = req.body;
+    const userId = req.user.id; // Assurez-vous que l'ID de l'utilisateur est disponible dans req.user
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'ID de cocktail invalide.' });
+    }
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: 'La note doit être un nombre entre 1 et 5.' });
+    }
+
+    const cocktail = await Cocktail.findById(id);
+    if (!cocktail) {
+      return res.status(404).json({ message: 'Cocktail non trouvé.' });
+    }
+
+    // Vérifier si l'utilisateur a déjà noté ce cocktail
+    const existingRatingIndex = cocktail.ratings.findIndex(r => r.user.toString() === userId);
+    if (existingRatingIndex !== -1) {
+      // Remplacer la note existante
+      cocktail.ratings[existingRatingIndex].rating = rating;
+    } else {
+      // Ajouter une nouvelle note
+      const newRating = {
+        user: userId,
+        rating
+      };
+      cocktail.ratings.push(newRating);
+    }
+
+    // Recalculer le rang
+    cocktail.calculateRank();
+
+    // Sauvegarder le cocktail mis à jour
+    await cocktail.save();
+
+    res.status(200).json({ message: 'Note ajoutée avec succès', cocktail });
+  } catch (err) {
+    console.error('Erreur lors de la notation du cocktail:', err);
+    res.status(500).json({ message: 'Erreur interne du serveur' });
+  }
+});
+
 
 export default router;
