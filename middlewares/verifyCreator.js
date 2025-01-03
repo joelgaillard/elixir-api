@@ -11,30 +11,30 @@ const verifyCreator = (type) => async (req, res, next) => {
     if (type === 'cocktail') {
       item = await Cocktail.findById(itemId);
       if (!item) {
-        return res.status(404).json({ message: "Cocktail non trouvé" });
+        return res.status(404).json({errors: [{ msg: "Cocktail non trouvé" }] });
       }
       // Vérifie si l'utilisateur est admin ou créateur du cocktail
       if (userRole !== 'admin' && item.createdBy.toString() !== userId) {
         return res.status(403).json({ 
-          message: "Accès refusé : vous n'êtes pas le créateur de ce cocktail" 
+          errors: [{ msg: "Accès refusé : vous n'êtes pas le créateur de ce cocktail" }] 
         });
       }
     } else if (type === 'bar') {
       item = await Bar.findById(itemId);
       if (!item) {
-        return res.status(404).json({ message: "Bar non trouvé" });
+        return res.status(404).json({errors: [{ msg: "Bar non trouvé" }] });
       }
       // Vérifie si l'utilisateur est admin ou manager du bar
       if (userRole !== 'admin' && item.manager.toString() !== userId) {
         return res.status(403).json({ 
-          message: "Accès refusé : vous n'êtes pas le manager de ce bar" 
+          errors: [{ msg: "Accès refusé : vous n'êtes pas le manager de ce bar" }] 
         });
       }
     }
 
     next();
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ errors: [{ msg: "Erreur interne du serveur" }] });
   }
 };
 

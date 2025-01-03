@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 
 const messageSchema = new mongoose.Schema({
-  chatRoomId: {
+  barId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'ChatRoom',
+    ref: 'Bar',
     required: true
   },
   userId: {
@@ -11,12 +11,16 @@ const messageSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  username: {
+    type: String,
+    required: true
+  },
   content: {
     type: String,
     required: true,
     trim: true
   },
-  createdAt: {
+  timestamp: {
     type: Date,
     default: Date.now
   }

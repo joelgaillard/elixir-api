@@ -1,16 +1,22 @@
 import mongoose from 'mongoose';
 import validator from 'validator';
 
-const ingredientSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true },
-  quantity: { type: Number, required: true, trim: true },
-  unit: { type: String, trim: true }
-}, { _id: false });
+const ingredientSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    quantity: { type: Number, required: true },
+    unit: { type: String, trim: true } // Unité facultative
+  },
+  { _id: false }
+);
 
-const ratingSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  rating: { type: Number, required: true, min: 1, max: 5 },
-}, { _id: false });
+const ratingSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    rating: { type: Number, required: true, min: 1, max: 5 }
+  },
+  { _id: false }
+);
 
 const cocktailSchema = new mongoose.Schema(
   {
@@ -65,14 +71,17 @@ const cocktailSchema = new mongoose.Schema(
     },
     rank: {
       type: Number,
-      default: 0,
-      min: [0, 'Le rang ne peut pas être inférieur à 0'],
-      max: [5, 'Le rang ne peut pas être supérieur à 5']
+      default: 0
     }
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    id: false
+  }
 );
 
+
+// Calcul automatique du rang
 cocktailSchema.methods.calculateRank = function () {
   if (this.ratings.length === 0) {
     this.rank = 0;

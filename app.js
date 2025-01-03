@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 
 import usersRouter from "./routes/users.js";
 import cocktailsRouter from './routes/cocktails.js';
+import ingredientsRouter from './routes/ingredients.js';
 import barsRouter from './routes/bars.js';
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.use('/', express.static(path.join(__dirname, 'docs')));
 // API routes
 app.use("/api/users", usersRouter);
 app.use("/api/cocktails", cocktailsRouter);
+app.use("/api/ingredients", ingredientsRouter);
 app.use("/api/bars", barsRouter);
 
 // catch 404 and forward to error handler

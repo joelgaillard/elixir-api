@@ -39,6 +39,10 @@ const barSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  cocktails: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Cocktail'
+  }],
   location: {
     type: {
       type: String,
