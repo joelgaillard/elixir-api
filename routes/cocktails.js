@@ -71,7 +71,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const { name, ingredients, sort = 'rank', order = 'desc', page = 1 } = req.query;
-    const limit = 8; // Nombre de cocktails par page
+    const limit = 12; // Nombre de cocktails par page
     const skip = (page - 1) * limit;
 
     let query = {};
