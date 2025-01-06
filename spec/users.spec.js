@@ -3,6 +3,7 @@ import app from "../app"
 import mongoose from "mongoose";
 import { cleanUpDatabase } from "./utils.js";
 import User from "../models/user";
+import Cocktail from "../models/cocktail";
 import dotenv from 'dotenv';
 import bcrypt from "bcrypt";
 
@@ -41,7 +42,7 @@ describe('PATCH /api/users/me', function() {
       password: await bcrypt.hash('Password-123', 12)
     });
     await user.save();
-
+  
     const loginRes = await supertest(app)
       .post('/api/users/login')
       .send({
@@ -49,9 +50,9 @@ describe('PATCH /api/users/me', function() {
         password: 'Password-123'
       })
       .expect(200);
-
+  
     const token = loginRes.body.token;
-
+  
     const res = await supertest(app)
       .patch('/api/users/me')
       .set('Authorization', `Bearer ${token}`)
@@ -62,13 +63,17 @@ describe('PATCH /api/users/me', function() {
       })
       .expect(200)
       .expect('Content-Type', /json/);
-
+  
     expect(res.body).toEqual(
       expect.objectContaining({
-        message: 'Utilisateur mis à jour avec succès.',
+        message: 'Utilisateur mis à jour avec succès',
+        user: expect.objectContaining({
+          username: 'JaneDoeUpdated',
+          email: 'janedoeupdated@exemple.com'
+        })
       })
     );
-
+  
     const updatedUser = await User.findById(user._id);
     expect(updatedUser).not.toBeNull();
     expect(updatedUser.username).toBe('JaneDoeUpdated');
@@ -87,6 +92,19 @@ describe('POST /api/users/me/favorites', function() {
     });
     await user.save();
 
+    const cocktail = new Cocktail({
+      name: 'Margarita',
+      description: 'Un cocktail classique à base de tequila, de citron vert et de triple sec.',
+      instructions: ['Mélanger les ingrédients', 'Servir dans un verre'],
+      image_url: 'https://example.com/image.jpg',
+      ingredients: [
+        { name: 'Tequila', quantity: 50, unit: 'ml' },
+        { name: 'Citron vert', quantity: 25, unit: 'ml' }
+      ],
+      createdBy: user._id
+    });
+    await cocktail.save();
+
     const loginRes = await supertest(app)
       .post('/api/users/login')
       .send({
@@ -98,7 +116,7 @@ describe('POST /api/users/me/favorites', function() {
     const token = loginRes.body.token;
 
     const favorite = {
-      cocktail_id: new mongoose.Types.ObjectId().toString(),
+      cocktail_id: cocktail._id.toString(),
     };
     const res = await supertest(app)
       .post('/api/users/me/favorites')
@@ -110,6 +128,10 @@ describe('POST /api/users/me/favorites', function() {
     expect(res.body).toEqual(
       expect.arrayContaining([favorite.cocktail_id])
     );
+
+    const updatedUser = await User.findById(user._id);
+    expect(updatedUser).not.toBeNull();
+    expect(updatedUser.favorites.map(id => id.toString())).toContain(favorite.cocktail_id);
   });
 });
 
