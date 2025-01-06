@@ -1,0 +1,83 @@
+[
+  {
+    "name": "Mojito",
+    "description": "Un cocktail frais à base de rhum, menthe, lime et sucre",
+    "instructions": [
+      "Mettre le sucre, des feuilles de menthe et du jus de citron vert dans un verre",
+      "Presser et remuer les ingrédients pour dissoudre le sucre et libérer le goût de la menthe",
+      "Ajouter le rhum et les glaçons grossièrements concassés",
+      "Ajouter l'eau gazeuse",
+      "Décorer avec des feuilles de menthe et des rondelles de citron vert"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1561544087-a0c4cd21eb8a?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Rhum blanc", "quantity": 6, "unit": "cl" },
+      { "name": "Jus de citron vert", "quantity": 3, "unit": "cl" },
+      { "name": "Sirop de sucre", "quantity": 2, "unit": "cl" },
+      { "name": "Sucre de canne", "quantity": 2, "unit": "c. à soupe" },
+      { "name": "Eau gazeuse", "quantity": 4, "unit": "cl" },
+      { "name": "Feuille de menthe", "quantity": 6 }
+    ]
+  },
+
+  {
+    "name": "Moscow Mule",
+    "description": "Un cocktail pétillant et rafraîchissant, alliant la douceur de la vodka, la fraîcheur du gingembre et l'acidité de la lime",
+    "instructions": [
+      "Verser des glaçons dans un verre, de préférence une tasse en cuivre",
+      "Ajouter la vodka et le jus de citron vert",
+      "Verser la bière au gingembre",
+      "Décorer avec une tranche de citron vert et un brin de menthe"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1607673882902-8f42c1ef183f?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Vodka", "quantity": 6, "unit": "cl" },
+      { "name": "Bière au gingembre", "quantity": 12, "unit": "cl" },
+      { "name": "Jus de citron vert", "quantity": 2, "unit" : "cl" }
+    ]
+  },
+
+  {
+    "name": "Bloody Mary",
+    "description": "Un cocktail épicé et savoureux, mêlant vodka, jus de tomate, épices et citron, parfait pour réveiller vos papilles avec une touche de piquant.",
+    "instructions": [
+      "Verser des glaçons dans un verre à mélange et ajouter tous les ingrédients",
+      "Remuer doucement",
+      "Verser le mélange dans un verre avec ou sans glaçon",
+      "Décorer avec une branche de céleri"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1541546339599-ecdbfcf77378?q=80&w=2052&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Vodka", "quantity": 6, "unit": "cl" },
+      { "name": "Jus de citron", "quantity": 1, "unit": "cl" },
+      { "name": "Jus de tomate", "quantity": 10, "unit" : "cl" },
+      { "name": "Sauce Worcestershire", "quantity": 1, "unit" : "tiret" },
+      { "name": "Tabasco", "quantity": 1, "unit" : "tiret" },
+      { "name": "Sel", "quantity": 1, "unit" : "pincée" },
+      { "name": "Poivre", "quantity": 1, "unit" : "pincée" }
+    ]
+  },
+
+  {
+    "name": "Negroni",
+    "description": "Un cocktail épicé et savoureux, mêlant vodka, jus de tomate, épices et citron, parfait pour réveiller vos papilles avec une touche de piquant.",
+    "instructions": [
+      "Verser le Gin, le Vermouth rosso et le Campari dans un verre",
+      "Remplir avec des glaçons",
+      "Remuer",
+      "Décorer avec le zeste d'une orange"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1551751299-1b51cab2694c?q=80&w=1776&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Gin", "quantity": 3, "unit": "cl" },
+      { "name": "Campari", "quantity": 3, "unit": "cl" },
+      { "name": "Vermouth Rosso", "quantity": 3, "unit" : "cl" }
+    ]
+  }
+
+
+
+
+
+
+]
