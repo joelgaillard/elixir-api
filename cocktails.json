@@ -60,24 +60,287 @@
 
   {
     "name": "Negroni",
-    "description": "Un cocktail épicé et savoureux, mêlant vodka, jus de tomate, épices et citron, parfait pour réveiller vos papilles avec une touche de piquant.",
+    "description": "Un cocktail élégant et intense, alliant le gin, le vermouth rouge et le Campari pour une expérience à la fois amère et raffinée.",
     "instructions": [
       "Verser le Gin, le Vermouth rosso et le Campari dans un verre",
       "Remplir avec des glaçons",
       "Remuer",
       "Décorer avec le zeste d'une orange"
     ],
-    "image_url": "https://images.unsplash.com/photo-1551751299-1b51cab2694c?q=80&w=1776&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "image_url": "https://images.unsplash.com/photo-1708737840329-0d192a01ab1a?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     "ingredients": [
       { "name": "Gin", "quantity": 3, "unit": "cl" },
       { "name": "Campari", "quantity": 3, "unit": "cl" },
       { "name": "Vermouth Rosso", "quantity": 3, "unit" : "cl" }
     ]
+  }, 
+
+{
+    "name": "Mimosa",
+    "description": "Un cocktail léger et pétillant, mélange parfait de champagne et de jus d'orange, idéal pour célébrer chaque instant avec élégance",
+    "instructions": [
+      "Verser le jus d'orange dans une flûte à champagne",
+      "Ajouter le champagne",
+      "Remuer"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1541546006121-5c3bc5e8c7b9?q=80&w=2067&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Jus d'orange", "quantity": 6, "unit": "cl" },
+      { "name": "Champagne", "quantity": 6, "unit": "cl" }
+    ]
+  },
+
+  {
+    "name": "Margarita",
+    "description": "Un cocktail vibrant et acidulé, mêlant tequila, lime et une touche de sucre, pour un équilibre parfait entre fraîcheur et intensité.",
+    "instructions": [
+      "Frotter une tranche de citron vert sur le bord du verre puis le tremper dans du sel",
+      "Verser la tequila, le triple sec et le jus de citron vert dans un shaker avec beaucoup de glaçons",
+      "Secouer vigoureusement",
+      "Filtrer dans le verre et ajouter des glaçons"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1541976076758-347942db1975?q=80&w=2067&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Tequila", "quantity": 4, "unit": "cl" },
+      { "name": "Triple Sec", "quantity": 2, "unit": "cl" },
+      { "name": "Jus de citron vert", "quantity": 2, "unit": "cl" }
+    ]
+  },
+
+  {
+    "name": "Manhattan",
+    "description": "Un cocktail classique et sophistiqué, mélangeant whisky, vermouth rouge et Agostura Bitters, pour une saveur riche et élégante.",
+    "instructions": [
+      "Verser tous les ingrédients dans un verre à mélange avec des glaçons",
+      "Remuer",
+      "Filtrer dans un verre à cocktail",
+      "Décorer avec le zeste d'une orange ou une cerise"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1712254247032-2182777f7264?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Whisky", "quantity": 4, "unit": "cl" },
+      { "name": "Vermouth Rosso", "quantity": 2, "unit": "cl" },
+      { "name": "Angostura Bitters", "quantity": 2, "unit": "traits" }
+    ]
+  },
+
+  {
+    "name": "Blue Lagoon",
+    "description": "Un cocktail éclatant et rafraîchissant, mêlant vodka, curaçao bleu et limonade, pour une explosion de saveurs tropicales et une couleur irrésistible.",
+    "instructions": [
+      "Verser la vodka et le Curaçao bleu dans un verre avec des glaçons et remuer",
+      "Ajouter la limonade et le jus de citron vert et remuer"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1675471603158-4d35c99b9a3a?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Vodka", "quantity": 6, "unit": "cl" },
+      { "name": "Curaçao bleu", "quantity": 3, "unit": "cl" },
+      { "name": "Jus de citron vert", "quantity": 2, "unit": "cl" },
+      { "name": "Limonade", "quantity": 8, "unit": "cl" }
+    ]
+  },
+
+  {
+    "name": "Piña Colada",
+    "description": "Un cocktail doux et exotique, mêlant rhum, jus d'ananas et crème de coco, pour une escapade tropicale en chaque gorgée.",
+    "instructions": [
+      "Mettre tous les ingrédients dans un mixeur avec de la glace",
+      "Verser dans un verre",
+      "Décorer avec une tranche d'ananas"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1607446045710-d5a8fd9bc1db?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Rhum blanc", "quantity": 3, "unit": "cl" },
+      { "name": "Jus d'ananas", "quantity": 7, "unit": "cl" },
+      { "name": "Lait de coco", "quantity": 4, "unit": "cl" }
+    ]
+  },
+
+  {
+    "name": "Daiquiri",
+    "description": "Un cocktail classique et rafraîchissant, combinant rhum, jus de citron vert frais et une touche de sucre, parfait pour une simplicité élégante.",
+    "instructions": [
+      "Mettre tous les ingrédients dans un shaker avec des glaçons et secouer vigoureusement",
+      "Verser dans un verre",
+      "Décorer avec un zeste de citron vert"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1687852310878-654b4f39e8cd?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Rhum blanc", "quantity": 5, "unit": "cl" },
+      { "name": "Sirop de sucre", "quantity": 1, "unit": "cl" },
+      { "name": "Jus de citron vert", "quantity": 3, "unit": "cl" }
+    ]
+  },
+
+  {
+    "name": "Caipirinha",
+    "description": "Un cocktail brésilien emblématique, alliant cachaça, citron vert frais et sucre, offrant une explosion de fraîcheur et de saveurs tropicales.",
+    "instructions": [
+      "Couper le citron en quartiers et le placer dans un verre avec le sucre",
+      "Piler",
+      "Remplir le verre de glaçons",
+      "Ajouter la cachaça et remuer"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1725161377393-bab6d1fe2b7b?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Cachaça", "quantity": 5, "unit": "cl" },
+      { "name": "Citron vert", "quantity": 1 },
+      { "name": "Sucre de canne", "quantity": 2, "unit": "c. à café" }
+    ]
+  },
+
+  {
+    "name": "Gin Tonic",
+    "description": "Un cocktail simple et sophistiqué, mêlant la richesse aromatique du gin à la fraîcheur pétillante de l'eau tonique.",
+    "instructions": [
+      "Dans un verre rempli de glaçons, verser le gin, puis le tonic",
+      "Remuer",
+      "Décorer avec du citron et des baies de genévrier"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1617714017369-d2067f4a011b?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Gin", "quantity": 5, "unit": "cl" },
+      { "name": "Schweppes", "quantity": 10, "unit": "cl" }
+    ]
+  },
+
+  {
+    "name": "Spritz",
+    "description": "un cocktail frais et pétillant, mêlant Aperol, Prosecco et eau pétillante, parfait pour un apéritif léger et rafraîchissant.",
+    "instructions": [
+      "Dans un verre rempli de glaçons, verser le Prosseco, l'Apérol et l'eau gazeuse",
+      "Remuer",
+      "Décorer avec une rondelle d'orange"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1728502185471-5ed904bdd6e3?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Prosecco", "quantity": 6, "unit": "cl" },
+      { "name": "Apérol", "quantity": 4, "unit": "cl" },
+      { "name": "Eau gazeuse", "quantity": 2, "unit": "cl" }
+    ]
+  },
+
+  {
+    "name": "Canchánchara",
+    "description": "Un cocktail cubain traditionnel, à base de rhum, de miel, de citron et d'eau, offrant une saveur douce et légèrement acidulée.",
+    "instructions": [
+      "Dans un shaker rempli de glaçons, mettre le Rhum, le jus de citron vert et le sirop de miel",
+      "Secouer vigoureusement",
+      "Filtrer dans un verre à cocktail avec des glaçons et ajouter le soda"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1624487394217-6d192d003564?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Rhum", "quantity": 5, "unit": "cl" },
+      { "name": "Jus de citron vert", "quantity": 2.5, "unit": "cl" },
+      { "name": "Sirop de miel", "quantity": 2, "unit": "cl" },
+      { "name": "Soda", "quantity": 3, "unit": "cl" }
+    ]
+  },
+
+  {
+    "name": "Sangria",
+    "description": "Une boisson festive et fruitée, composée de vin rouge, de fruits frais, de sucre et parfois d'un peu de liqueur, idéale pour les moments conviviaux et les chaudes journées d'été.",
+    "instructions": [
+      "Dans une grande jarre, mettre tous les ingrédients exepté la limonade",
+      "Laisser reposer au frais pendant au moins 2 heures",
+      "Ajouter la limonade juste avant de servir"
+    ],
+    "image_url": "https://images.pexels.com/photos/29799870/pexels-photo-29799870/free-photo-of-sangria-rafraichissante-aux-fruits-frais-dans-un-verre.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "ingredients": [
+      { "name": "Vin rouge", "quantity": 75, "unit": "cl" },
+      { "name": "Cognac", "quantity": 8, "unit": "cl" },
+      { "name": "Citron", "quantity": 1},
+      { "name": "Orange", "quantity": 1},
+      { "name": "Limonade", "quantity": 20, "unit": "cl" }
+    ]
+  },
+
+  {
+    "name": "Cosmopolitan",
+    "description": "Un cocktail élégant et fruité, mélangeant vodka, triple sec, jus de canneberge et un trait de citron vert, offrant une saveur légèrement sucrée et acidulée.",
+    "instructions": [
+      "Dans un shaker, mettre la vodka, le triple sec, le jus de canneberge et le jus de citron",
+      "Secouer vigoureusement",
+      "Verser dans un verre à cocktail"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1596097092487-5cced74300e5?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Vodka", "quantity": 3, "unit": "cl" },
+      { "name": "Triple Sec", "quantity": 2, "unit": "cl" },
+      { "name": "Jus de citron vert", "quantity": 1, "unit": "cl"},
+      { "name": "Jus de canneberge", "quantity": 1, "unit": "cl" }
+    ]
+  },
+
+  {
+    "name": "Tom Collins",
+    "description": "Un cocktail rafraîchissant à base de gin, de jus de citron, de sucre et d'eau gazeuse, parfait pour une touche de légèreté et de fraîcheur.",
+    "instructions": [
+      "Dans un shaker avec quelques glaçons, mettre le gin, le jus de citron et le sirop de sucre",
+      "Secouer vigoureusement",
+      "Verser dans un verre et ajouter l'eau gazeuse"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1626403550720-c2b75f57dab8?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Gin", "quantity": 7, "unit": "cl" },
+      { "name": "Jus de citron", "quantity": 2.5, "unit": "cl"},
+      { "name": "Sirop de sucre", "quantity": 2.5, "unit": "cl" },
+      { "name": "Eau gazeuse", "quantity": 6, "unit": "cl" }
+    ]
+  },
+
+ {
+    "name": "Pisco Sour",
+    "description": "Un cocktail sud-américain emblématique, préparé à base de pisco (une eau-de-vie de raisin), de jus de citron vert, de sirop de sucre, de blanc d'œuf et d'angostura. Il est à la fois acidulé, sucré et légèrement mousseux.",
+    "instructions": [
+      "Dans un shaker avec quelques glaçons, mettre tous les ingrédients sauf l'Angostura",
+      "Secouer vigoureusement",
+      "Verser dans un verre le mélange et ajouter 2 gouttes d'Angostura"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1624528200979-38165e9a969c?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Pisco", "quantity": 6, "unit": "cl" },
+      { "name": "Jus de citron vert", "quantity": 1.5, "unit": "cl"},
+      { "name": "Sirop de sucre", "quantity": 1.5, "unit": "cl" },
+      { "name": "Blanc d'oeuf", "quantity": 1 },
+      { "name": "Sirop de sucre", "quantity": 1.5, "unit": "cl" },
+      { "name": "Angostura", "quantity": 2, "unit": "traits" }
+    ]
+  },
+
+  {
+    "name": "Sazerac",
+    "description": "Un cocktail classique de la Nouvelle-Orléans, alliant whisky de seigle, absinthe (ou un substitut d'absinthe), sucre et angostura. Il est réputé pour sa saveur complexe et son histoire, étant l'un des cocktails les plus anciens d'Amérique.",
+    "instructions": [
+      "Mettre le sirop de sucre et le peychaud's bitters dans un verre et piler",
+      "verser le brandy et remuer",
+      "Dans un autre verre, mettre l'absinthe avec un peu d'eau et ajouter le mélange précédent",
+      "Remuer et décorer avec un zeste de citron"
+    ],
+    "image_url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Brandy", "quantity": 5, "unit": "cl" },
+      { "name": "Absinthe", "quantity": 0.5, "unit": "cl"},
+      { "name": "Sirop de sucre", "quantity": 0.5, "unit": "cl" },
+      { "name": "Peychaud's Bitters", "quantity": 2, "unit": "traits" }
+    ]
+  },
+
+  {
+    "name": "Paloma",
+    "description": "Un cocktail rafraîchissant à base de tequila, de jus de pamplemousse, de lime et de soda, souvent légèrement sucré et salé. C'est une boisson légère et parfaite pour les journées chaudes",
+    "instructions": [
+      "Dans un verre, verser tous les ingrédients avec quelques glaçons",
+      "Remuer",
+      "Décorer avec une rondelle de citron"
+    ],
+    "image_url": "https://plus.unsplash.com/premium_photo-1661342430103-778ac87489bc?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "ingredients": [
+      { "name": "Tequila", "quantity": 5, "unit": "cl" },
+      { "name": "Jus de citron vert", "quantity": 2, "unit": "cl"},
+      { "name": "Sirop de sucre", "quantity": 1, "unit": "cl" },
+      { "name": "Jus de pamplemousse", "quantity": 5, "unit": "cl" },
+      { "name": "Eau gazeuse", "quantity": 2, "unit": "cl" }
+    ]
   }
-
-
-
-
-
-
 ]
