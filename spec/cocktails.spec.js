@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { cleanUpDatabase } from "./utils.js";
 import User from "../models/user";
 import bcrypt from "bcrypt"; 
+import Cocktail from "../models/cocktail";
 
 beforeEach(cleanUpDatabase);
 
@@ -16,7 +17,6 @@ describe("POST /api/cocktails", function () {
     
     const hashedPassword = await bcrypt.hash("ManagerPassword-123", 12);  
 
-    // Créez un utilisateur manager pour le test
     const manager = new User({
       username: "ManagerUser",
       email: "manager@exemple.com",
@@ -25,11 +25,8 @@ describe("POST /api/cocktails", function () {
     });
     await manager.save();
 
-    // Vérifiez si l'utilisateur est bien enregistré dans la base de données
     const createdManager = await User.findOne({ email: "manager@exemple.com" });
-    console.log("Created manager: ", createdManager);  
 
-    // Obtenez un token d'authentification pour le manager
     const loginRes = await supertest(app)
       .post("/api/users/login")
       .send({
@@ -38,11 +35,9 @@ describe("POST /api/cocktails", function () {
       })
       .expect(200);
 
-    console.log("Login response: ", loginRes.body);  
 
     const token = loginRes.body.token;
 
-    // Créez un nouveau cocktail
     const res = await supertest(app)
       .post("/api/cocktails")
       .set("Authorization", `Bearer ${token}`)
@@ -62,7 +57,6 @@ describe("POST /api/cocktails", function () {
       .expect(201)
       .expect("Content-Type", /json/);
 
-    // Vérifiez la réponse
     expect(res.body).toEqual(
       expect.objectContaining({
         message: "Cocktail créé avec succès",
@@ -84,3 +78,114 @@ describe("POST /api/cocktails", function () {
     );
   });
 });
+
+describe('DELETE /api/cocktails/:id', function() {
+  it('should delete a specific cocktail', async function() {
+    const manager = new User({
+      username: 'ManagerUser',
+      email: 'manager@exemple.com',
+      password: await bcrypt.hash('ManagerPassword-123', 12),
+      role: 'manager'
+    });
+    await manager.save();
+
+    const cocktail = new Cocktail({
+      name: 'Margarita',
+      description: 'Un cocktail classique à base de tequila, de citron vert et de triple sec.',
+      instructions: ['Mélanger les ingrédients', 'Servir dans un verre'],
+      image_url: 'https://example.com/image.jpg',
+      ingredients: [
+        { name: 'Tequila', quantity: 50, unit: 'ml' },
+        { name: 'Citron vert', quantity: 25, unit: 'ml' }
+      ],
+      createdBy: manager._id
+    });
+    await cocktail.save();
+
+    const loginRes = await supertest(app)
+      .post('/api/users/login')
+      .send({
+        email: 'manager@exemple.com',
+        password: 'ManagerPassword-123'
+      })
+      .expect(200);
+
+    const token = loginRes.body.token;
+
+    const res = await supertest(app)
+      .delete(`/api/cocktails/${cocktail._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200)
+      .expect('Content-Type', /json/);
+
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        message: 'Cocktail supprimé avec succès.'
+      })
+    );
+
+    const deletedCocktail = await Cocktail.findById(cocktail._id);
+    expect(deletedCocktail).toBeNull();
+  });
+}); 
+
+describe('GET /api/cocktails', function() {
+  it('should retrieve a list of cocktails with filtering, sorting, and pagination', async function() {
+    const user = new User({
+      username: 'JaneDoe',
+      email: 'janedoe@exemple.com',
+      password: await bcrypt.hash('Password-123', 12)
+    });
+    await user.save();
+
+    const cocktails = [
+      new Cocktail({
+        name: 'Margarita',
+        description: 'Un cocktail classique à base de tequila, de citron vert et de triple sec.',
+        instructions: ['Mélanger les ingrédients', 'Servir dans un verre'],
+        image_url: 'https://example.com/image.jpg',
+        ingredients: [
+          { name: 'Tequila', quantity: 50, unit: 'ml' },
+          { name: 'Citron vert', quantity: 25, unit: 'ml' }
+        ],
+        createdBy: user._id
+      }),
+      new Cocktail({
+        name: 'Mojito',
+        description: 'Un cocktail rafraîchissant à base de rhum, de menthe et de citron vert.',
+        instructions: ['Écraser la menthe', 'Ajouter le rhum', 'Servir avec de la glace'],
+        image_url: 'https://example.com/mojito.jpg',
+        ingredients: [
+          { name: 'Rhum', quantity: 50, unit: 'ml' },
+          { name: 'Menthe', quantity: 10, unit: 'feuilles' }
+        ],
+        createdBy: user._id
+      })
+    ];
+    await Cocktail.insertMany(cocktails);
+
+    const res = await supertest(app)
+      .get('/api/cocktails?name=moj&sort=rank&order=desc&page=1')
+      .expect(200)
+      .expect('Content-Type', /json/);
+
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        cocktails: expect.arrayContaining([
+          expect.objectContaining({
+            name: 'Mojito',
+            image_url: 'https://example.com/mojito.jpg',
+            rank: 0,
+            ratingsCount: 0
+          })
+        ]),
+        pagination: expect.objectContaining({
+          page: 1,
+          totalPages: 1,
+          totalItems: 1,
+          itemsPerPage: 12
+        })
+      })
+    );
+  });
+}); 
