@@ -1,25 +1,29 @@
-import express from 'express';
-import User from '../models/user.js';
-import Cocktail from '../models/cocktail.js';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { body, validationResult } from 'express-validator';
-import dotenv from 'dotenv';
-import verifyToken from '../middlewares/verifyToken.js';
-import optionalAuth from '../middlewares/optionalAuth.js';
-import verifyRole from '../middlewares/verifyRole.js';
-import mongoose from 'mongoose';
+import express from "express";
+import User from "../models/user.js";
+import Cocktail from "../models/cocktail.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { body, validationResult } from "express-validator";
+import dotenv from "dotenv";
+import verifyToken from "../middlewares/verifyToken.js";
+import optionalAuth from "../middlewares/optionalAuth.js";
+import verifyRole from "../middlewares/verifyRole.js";
+import mongoose from "mongoose";
 
 dotenv.config();
 
 const router = express.Router();
 
 function generateToken(user) {
-  return jwt.sign({
-    id: user._id,
-    username: user.username,
-    role: user.role
-  }, process.env.JWT_SECRET, { expiresIn: '15m' });
+  return jwt.sign(
+    {
+      id: user._id,
+      username: user.username,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "180m" }
+  );
 }
 
 /**
@@ -33,7 +37,7 @@ function generateToken(user) {
  *     {
  *       "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *     }
- * 
+ *
  * @apiBody {String} username Nom d'utilisateur (3-30 caractères, uniquement lettres, chiffres, underscores).
  * @apiBody {String} email Adresse e-mail valide.
  * @apiBody {String} password Mot de passe (min 8 caractères, inclut une majuscule, une minuscule, un chiffre et un caractère spécial).
@@ -41,7 +45,7 @@ function generateToken(user) {
  * @apiExample {json} Exemple de requête :
  *     POST api/users HTTP/1.1
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "username": "monNomUtilisateur",
  *       "email": "exemple@email.com",
@@ -57,7 +61,7 @@ function generateToken(user) {
  * @apiSuccessExample {json} Réponse en cas de succès (utilisateur):
  *     HTTP/1.1 201 Created
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "message": "Utilisateur créé avec succès",
  *       "user": {
@@ -82,7 +86,7 @@ function generateToken(user) {
  * @apiErrorExample {json} Erreur 400 (erreurs de validation) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Le nom d'utilisateur doit contenir entre 3 et 30 caractères", "field": "username" },
@@ -92,43 +96,67 @@ function generateToken(user) {
  *     }
  */
 router.post(
-  '/',
+  "/",
   optionalAuth,
   [
-    body('username')
+    body("username")
       .isLength({ min: 3, max: 30 })
-      .withMessage('Le nom d\'utilisateur doit contenir entre 3 et 30 caractères')
+      .withMessage(
+        "Le nom d'utilisateur doit contenir entre 3 et 30 caractères"
+      )
       .matches(/^[a-zA-Z0-9_]+$/)
-      .withMessage('Le nom d\'utilisateur ne doit contenir que des lettres, des chiffres et des underscores'),
-    body('email')
+      .withMessage(
+        "Le nom d'utilisateur ne doit contenir que des lettres, des chiffres et des underscores"
+      ),
+    body("email")
       .isEmail()
-      .withMessage('Adresse e-mail invalide')
+      .withMessage("Adresse e-mail invalide")
       .normalizeEmail(),
-    body('password')
+    body("password")
       .isLength({ min: 8 })
-      .withMessage('Le mot de passe doit contenir au moins 8 caractères')
+      .withMessage("Le mot de passe doit contenir au moins 8 caractères")
       .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/)
-      .withMessage('Le mot de passe doit contenir au moins une lettre minuscule, une lettre majuscule, un chiffre et un caractère spécial')
+      .withMessage(
+        "Le mot de passe doit contenir au moins une lettre minuscule, une lettre majuscule, un chiffre et un caractère spécial"
+      ),
   ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array().map(error => ({ msg: error.msg, field: error.path })) });
+      return res
+        .status(400)
+        .json({
+          errors: errors
+            .array()
+            .map((error) => ({ msg: error.msg, field: error.path })),
+        });
     }
 
     const { username, email, password } = req.body;
 
-    const role = req.user && req.user.role === 'admin' ? 'manager' : 'user';
+    const role = req.user && req.user.role === "admin" ? "manager" : "user";
 
     try {
       const existingUserByEmail = await User.findOne({ email });
       if (existingUserByEmail) {
-        return res.status(400).json({ errors: [{ msg: 'Cette adresse e-mail est déjà utilisée', field: 'email' }] });
+        return res
+          .status(400)
+          .json({
+            errors: [
+              { msg: "Cette adresse e-mail est déjà utilisée", field: "email" },
+            ],
+          });
       }
 
       const existingUserByUsername = await User.findOne({ username });
       if (existingUserByUsername) {
-        return res.status(400).json({ errors: [{ msg: 'Ce nom d\'utilisateur est déjà pris', field: 'username' }] });
+        return res
+          .status(400)
+          .json({
+            errors: [
+              { msg: "Ce nom d'utilisateur est déjà pris", field: "username" },
+            ],
+          });
       }
 
       const hashedPassword = await bcrypt.hash(password, 12);
@@ -136,41 +164,33 @@ router.post(
         username,
         email,
         password: hashedPassword,
-        role
+        role,
       });
 
       await newUser.save();
 
       const token = generateToken(newUser);
 
-      res.cookie('token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 15 * 60 * 1000 // 15 minutes
-      });
-
-      if (role === 'manager') {
+      if (role === "manager") {
         return res.status(201).json({
-          message: 'Manager créé avec succès',
+          message: "Manager créé avec succès",
           user: {
             username: newUser.username,
             email: newUser.email,
-          }
+          },
         });
       }
 
       res.status(201).json({
-        message: 'Utilisateur créé avec succès',
+        message: "Utilisateur créé avec succès",
         user: {
           username: newUser.username,
           email: newUser.email,
         },
-        token
+        token,
       });
-
     } catch (err) {
-      console.error('Erreur lors de la création:', err);
-      res.status(500).json({ message: 'Erreur interne du serveur' });
+      res.status(500).json({ message: "Erreur interne du serveur" });
     }
   }
 );
@@ -187,7 +207,7 @@ router.post(
  * @apiExample {json} Exemple de requête :
  *     POST api/users/login HTTP/1.1
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "email": "exemple@email.com",
  *       "password": "Password@123"
@@ -199,7 +219,7 @@ router.post(
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "message": "Connexion réussie",
  *       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -209,7 +229,7 @@ router.post(
  * @apiErrorExample {json} Erreur 400 (erreurs de validation ou identifiants invalides) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Adresse e-mail invalide", "field": "email" },
@@ -220,49 +240,62 @@ router.post(
  *     }
  *
  */
-router.post('/login', [
-  body('email').isEmail().withMessage('Adresse e-mail invalide').normalizeEmail(),
-  body('password').isLength({ min: 1 }).withMessage('Le mot de passe est requis'),
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array().map(error => ({ msg: error.msg, field: error.path })) });
-  }
-
-  const { email, password } = req.body;
-  try {
-    const user = await User.findOne({ email });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(400).json({ errors: [{ msg: 'Identifiants invalides', field: 'email' }, { msg: 'Identifiants invalides', field: 'password' }] });
+router.post(
+  "/login",
+  [
+    body("email")
+      .isEmail()
+      .withMessage("Adresse e-mail invalide")
+      .normalizeEmail(),
+    body("password")
+      .isLength({ min: 1 })
+      .withMessage("Le mot de passe est requis"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res
+        .status(400)
+        .json({
+          errors: errors
+            .array()
+            .map((error) => ({ msg: error.msg, field: error.path })),
+        });
     }
 
-    const token = generateToken(user);
+    const { email, password } = req.body;
+    try {
+      const user = await User.findOne({ email });
+      if (!user || !(await bcrypt.compare(password, user.password))) {
+        return res.status(400).json({
+          errors: [
+            { msg: "Identifiants invalides", field: "email" },
+            { msg: "Identifiants invalides", field: "password" },
+          ],
+        });
+      }
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 15 * 60 * 1000 // 15 minutes
-    });
+      const token = generateToken(user);
 
-    res.status(200).json({ message: 'Connexion réussie', token });
-  } catch (error) {
-    console.error('Login error:', error.message || error);
-    res.status(500).json({ message: 'Erreur interne du serveur' });
+      res.status(200).json({ message: "Connexion réussie", token });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur interne du serveur" });
+    }
   }
-});
+);
 
 /**
  * @api {get} /users/me Obtenir le profil de l'utilisateur connecté
  * @apiName GetUserProfile
  * @apiGroup Utilisateurs
  * @apiDescription Récupère les informations de l'utilisateur actuellement connecté grâce à son jeton JWT.
- * 
- * @apiHeader {String} Authorization Bearer <token> 
+ *
+ * @apiHeader {String} Authorization Bearer <token>
  * @apiHeaderExample {json} Exemple d'en-tête :
  *     {
  *       "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *     }
- * 
+ *
  * @apiExample {curl} Exemple de requête :
  *    curl -X GET "https://elixir-api-st9s.onrender.com/api/users/me" \
  *        -H "Authorization: Bearer <token>"
@@ -270,42 +303,23 @@ router.post('/login', [
  * @apiSuccess {String} _id Identifiant unique de l'utilisateur.
  * @apiSuccess {String} username Nom d'utilisateur.
  * @apiSuccess {String} email Adresse e-mail de l'utilisateur.
- * @apiSuccess {Object[]} favorites Liste des cocktails favoris avec leurs détails complets.
- * @apiSuccess {String} favorites._id Identifiant unique du cocktail.
- * @apiSuccess {String} favorites.name Nom du cocktail.
- * @apiSuccess {String} favorites.description Description du cocktail.
- * @apiSuccess {String[]} favorites.instructions Instructions de préparation.
- * @apiSuccess {String} favorites.image_url URL de l'image du cocktail.
- * @apiSuccess {Object[]} favorites.ingredients Liste des ingrédients du cocktail.
  *
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
  *     Location: /api/users/me
- * 
+ *
  *     {
  *       "_id": "12345abcd",
  *       "username": "johndoe",
  *       "email": "john@example.com",
- *       "favorites": [
- *         {
- *           "_id": "67890efgh",
- *           "name": "Old Fashioned",
- *           "description": "Un cocktail classique...",
- *           "instructions": ["Mélanger...", "Servir..."],
- *           "image_url": "https://example.com/image.jpg",
- *           "ingredients": [
- *             { "name": "Whisky", "quantity": 50, "unit": "ml" }
- *           ]
- *         }
- *       ]
  *     }
  *
  * @apiError (401) {Object[]} message Aucun token n'a été fourni.
  * @apiErrorExample {json} Erreur 401 (token absent) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé : Aucun token fourni" }
@@ -316,7 +330,7 @@ router.post('/login', [
  * @apiErrorExample {json} Erreur 403 (token invalide ou expiré) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Token invalide ou expiré" }
@@ -327,41 +341,40 @@ router.post('/login', [
  * @apiErrorExample {json} Réponse en cas d'utilisateur non trouvé :
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Utilisateur non trouvé", "field": "user" }
  *       ]
  *     }
  */
-router.get('/me', verifyToken, async (req, res) => {
+router.get("/me", verifyToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id)
-      .select('-password -role')
-      .populate('favorites');
+    const user = await User.findById(req.user.id).select(
+      "-password -role -favorites -__v"
+    );
 
     if (!user) {
       return res.status(404).json({
-        errors: [{ msg: 'Utilisateur non trouvé', field: 'user' }]
+        errors: [{ msg: "Utilisateur non trouvé", field: "user" }],
       });
     }
 
     res.json(user);
   } catch (error) {
-    console.error('Erreur lors de la récupération du profil:', error);
     res.status(500).json({
-      errors: [{ msg: 'Erreur interne du serveur', field: 'server' }]
+      errors: [{ msg: "Erreur interne du serveur", field: "server" }],
     });
   }
 });
 
 /**
- * @api {patch} /me Met à jour les informations de l'utilisateur connecté
+ * @api {patch} /me Mettre à jour les informations de l'utilisateur connecté
  * @apiName UpdateUser
  * @apiGroup Utilisateurs
  * @apiDescription Met à jour les informations de l'utilisateur connecté.
  *
- * @apiHeader {String} Authorization Bearer <token> 
+ * @apiHeader {String} Authorization Bearer <token>
  * @apiHeaderExample {json} Exemple d'en-tête :
  *     {
  *       "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -374,7 +387,7 @@ router.get('/me', verifyToken, async (req, res) => {
  * @apiExample {json} Exemple de requête :
  *     PATCH api/users/me HTTP/1.1
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "username": "nouveauNom",
  *       "email": "nouveau@email.com",
@@ -386,7 +399,7 @@ router.get('/me', verifyToken, async (req, res) => {
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "message": "Utilisateur mis à jour avec succès",
  *       "user": {
@@ -399,19 +412,19 @@ router.get('/me', verifyToken, async (req, res) => {
  * @apiErrorExample {json} Erreur 400 (erreurs de validation) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Ce nom d'utilisateur est déjà pris.", "field": "username" },
  *         { "msg": "Cette adresse e-mail est déjà utilisée.", "field": "email" }
  *       ]
  *     }
- * 
+ *
  * @apiError (401) {Object[]} errors Aucun token n'a été fourni.
  * @apiErrorExample {json} Erreur 401 (token absent) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé : Aucun token fourni" }
@@ -430,31 +443,43 @@ router.get('/me', verifyToken, async (req, res) => {
  *
  */
 router.patch(
-  '/me',
+  "/me",
   verifyToken,
   [
-    body('username')
+    body("username")
       .optional()
       .isLength({ min: 3, max: 30 })
-      .withMessage('Le nom d\'utilisateur doit contenir entre 3 et 30 caractères')
+      .withMessage(
+        "Le nom d'utilisateur doit contenir entre 3 et 30 caractères"
+      )
       .matches(/^[a-zA-Z0-9_]+$/)
-      .withMessage('Le nom d\'utilisateur ne doit contenir que des lettres, des chiffres et des underscores'),
-    body('email')
+      .withMessage(
+        "Le nom d'utilisateur ne doit contenir que des lettres, des chiffres et des underscores"
+      ),
+    body("email")
       .optional()
       .isEmail()
-      .withMessage('Adresse e-mail invalide')
+      .withMessage("Adresse e-mail invalide")
       .normalizeEmail(),
-    body('password')
+    body("password")
       .optional()
       .isLength({ min: 8 })
-      .withMessage('Le mot de passe doit contenir au moins 8 caractères')
+      .withMessage("Le mot de passe doit contenir au moins 8 caractères")
       .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/)
-      .withMessage('Le mot de passe doit contenir au moins une lettre minuscule, une lettre majuscule, un chiffre et un caractère spécial')
+      .withMessage(
+        "Le mot de passe doit contenir au moins une lettre minuscule, une lettre majuscule, un chiffre et un caractère spécial"
+      ),
   ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array().map(error => ({ msg: error.msg, field: error.path })) });
+      return res
+        .status(400)
+        .json({
+          errors: errors
+            .array()
+            .map((error) => ({ msg: error.msg, field: error.path })),
+        });
     }
 
     const { username, email, password } = req.body;
@@ -462,16 +487,34 @@ router.patch(
 
     if (username) {
       const existingUserByUsername = await User.findOne({ username });
-      if (existingUserByUsername && existingUserByUsername._id.toString() !== req.user.id) {
-        return res.status(400).json({ errors: [{ msg: 'Ce nom d\'utilisateur est déjà pris', field: 'username' }] });
+      if (
+        existingUserByUsername &&
+        existingUserByUsername._id.toString() !== req.user.id
+      ) {
+        return res
+          .status(400)
+          .json({
+            errors: [
+              { msg: "Ce nom d'utilisateur est déjà pris", field: "username" },
+            ],
+          });
       }
       updates.username = username;
     }
 
     if (email) {
       const existingUserByEmail = await User.findOne({ email });
-      if (existingUserByEmail && existingUserByEmail._id.toString() !== req.user.id) {
-        return res.status(400).json({ errors: [{ msg: 'Cette adresse e-mail est déjà utilisée', field: 'email' }] });
+      if (
+        existingUserByEmail &&
+        existingUserByEmail._id.toString() !== req.user.id
+      ) {
+        return res
+          .status(400)
+          .json({
+            errors: [
+              { msg: "Cette adresse e-mail est déjà utilisée", field: "email" },
+            ],
+          });
       }
       updates.email = email;
     }
@@ -484,15 +527,14 @@ router.patch(
       await User.findByIdAndUpdate(req.user.id, updates, { new: true });
 
       res.status(200).json({
-        message: 'Utilisateur mis à jour avec succès',
+        message: "Utilisateur mis à jour avec succès",
         user: {
           username: updates.username,
           email: updates.email,
-        }
+        },
       });
     } catch (err) {
-      console.error('Erreur lors de la mise à jour:', err);
-      res.status(500).json({ message: 'Erreur interne du serveur' });
+      res.status(500).json({ message: "Erreur interne du serveur" });
     }
   }
 );
@@ -503,10 +545,10 @@ router.patch(
  * @apiGroup Utilisateurs
  * @apiDescription Permet à un utilisateur connecté de supprimer définitivement son compte.
  *
- * @apiHeader {String} Authorization Bearer <token> 
+ * @apiHeader {String} Authorization Bearer <token>
  * @apiHeaderExample {Header} Exemple d'en-tête:
  *     Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- * 
+ *
  *
  * @apiExample {curl} Exemple de requête :
  *     curl -X DELETE "https://elixir-api-st9s.onrender.com/api/users/me" \
@@ -517,27 +559,27 @@ router.patch(
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "message": "Utilisateur supprimé avec succès"
  *     }
- * 
+ *
  * @apiError (400) {String} message Erreur lors de la suppression de l'utilisateur.
  * @apiErrorExample {json} Erreur 400 (suppression échouée) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Erreur lors de la suppression de l'utilisateur" }
  *       ]
  *     }
- * 
+ *
  * @apiError (401) {Object[]} message Aucun token n'a été fourni.
  * @apiErrorExample {json} Erreur 401 (token absent) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé : Aucun token fourni" }
@@ -548,7 +590,7 @@ router.patch(
  * @apiErrorExample {json} Erreur 403 (token invalide ou expiré) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Token invalide ou expiré" }
@@ -559,26 +601,28 @@ router.patch(
  * @apiErrorExample {json} Erreur 404 (utilisateur non trouvé) :
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Utilisateur non trouvé" }
  *       ]
  *     }
  */
-router.delete('/me', verifyToken, async (req, res) => {
+router.delete("/me", verifyToken, async (req, res) => {
   try {
     const deletedUser = await User.findByIdAndDelete(req.user.id);
     if (!deletedUser) {
       return res.status(404).json({
-        errors: [{ msg: 'Utilisateur non trouvé', field: 'user' }]
-      }
-      );
+        errors: [{ msg: "Utilisateur non trouvé", field: "user" }],
+      });
     }
-    res.status(200).json({ message: 'Utilisateur supprimé avec succès' });
+    res.status(200).json({ message: "Utilisateur supprimé avec succès" });
   } catch (err) {
-    console.error('Erreur lors de la suppression de l\'utilisateur:', err);
-    res.status(400).json({ errors: [{ msg: 'Erreur lors de la suppression de l\'utilisateur' }] });
+    res
+      .status(400)
+      .json({
+        errors: [{ msg: "Erreur lors de la suppression de l'utilisateur" }],
+      });
   }
 });
 
@@ -588,10 +632,10 @@ router.delete('/me', verifyToken, async (req, res) => {
  * @apiGroup Utilisateurs
  * @apiDescription Permet à un administrateur de supprimer un utilisateur spécifique par son ID.
  *
- * @apiHeader {String} Authorization Bearer <token> 
+ * @apiHeader {String} Authorization Bearer <token>
  * @apiHeaderExample {Header} Exemple d'en-tête:
  *     Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- * 
+ *
  * @apiParam {String} id ID de l'utilisateur à supprimer.
  *
  * @apiExample {curl} Exemple de requête :
@@ -603,7 +647,7 @@ router.delete('/me', verifyToken, async (req, res) => {
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "message": "Utilisateur supprimé avec succès"
  *     }
@@ -612,18 +656,18 @@ router.delete('/me', verifyToken, async (req, res) => {
  * @apiErrorExample {json} Erreur 400 (suppression échouée) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Erreur lors de la suppression de l'utilisateur"
  *       ]
  *     }
- * 
+ *
  * @apiError (401) {Object[]} message Aucun token n'a été fourni.
  * @apiErrorExample {json} Erreur 401 (token absent) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé : Aucun token fourni" }
@@ -634,18 +678,18 @@ router.delete('/me', verifyToken, async (req, res) => {
  * @apiErrorExample {json} Erreur 403 (token invalide ou expiré) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Token invalide ou expiré" }
  *       ]
  *     }
- * 
+ *
  * @apiError (403) {Object[]} message Accès refusé : rôle insuffisant.
  * @apiErrorExample {json} Erreur 403 (rôle insuffisant) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé : rôle insuffisant" }
@@ -656,30 +700,34 @@ router.delete('/me', verifyToken, async (req, res) => {
  * @apiErrorExample {json} Erreur 404 (utilisateur non trouvé) :
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Utilisateur non trouvé" }
  *       ]
  *     }
- * 
+ *
  */
-router.delete('/:id', verifyToken, verifyRole("admin"), async (req, res) => {
+router.delete("/:id", verifyToken, verifyRole("admin"), async (req, res) => {
   try {
     const deletedUser = await User.findByIdAndDelete(req.params.id);
     if (!deletedUser) {
-      return res.status(404).json({ errors: [{ msg: 'Utilisateur non trouvé' }] });
+      return res
+        .status(404)
+        .json({ errors: [{ msg: "Utilisateur non trouvé" }] });
     }
-    res.status(200).json({ message: 'Utilisateur supprimé avec succès' });
+    res.status(200).json({ message: "Utilisateur supprimé avec succès" });
   } catch (err) {
-    console.error('Erreur lors de la suppression de l\'utilisateur:', err);
-    res.status(400).json({ errors: [{ msg: 'Erreur lors de la suppression de l\'utilisateur' }] });
+    res
+      .status(400)
+      .json({
+        errors: [{ msg: "Erreur lors de la suppression de l'utilisateur" }],
+      });
   }
 });
 
-
 /**
- * @api {post} /users/me/favorites Ajouter un favori
+ * @api {post} /users/me/favorites Ajouter un cocktail en favoris
  * @apiName AddFavorite
  * @apiGroup Utilisateurs
  * @apiDescription Ajoute un cocktail aux favoris de l'utilisateur connecté.
@@ -693,7 +741,7 @@ router.delete('/:id', verifyToken, verifyRole("admin"), async (req, res) => {
  * @apiExample {json} Exemple de requête :
  *     POST api/users/me/favorites HTTP/1.1
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "cocktail_id": "12345abcd"
  *     }
@@ -703,7 +751,7 @@ router.delete('/:id', verifyToken, verifyRole("admin"), async (req, res) => {
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     [
  *       "12345abcd",
  *       "67890efgh"
@@ -713,18 +761,18 @@ router.delete('/:id', verifyToken, verifyRole("admin"), async (req, res) => {
  * @apiErrorExample {json} Erreur 400 (erreurs de validation) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "L'ID du cocktail est requis", "field": "cocktail_id" }
  *       ]
  *     }
- * 
+ *
  * @apiError (401) {Object[]} message Aucun token n'a été fourni.
  * @apiErrorExample {json} Erreur 401 (token absent) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé : Aucun token fourni" }
@@ -735,81 +783,95 @@ router.delete('/:id', verifyToken, verifyRole("admin"), async (req, res) => {
  * @apiErrorExample {json} Erreur 403 (token invalide ou expiré) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Token invalide ou expiré" }
  *       ]
  *     }
- * 
+ *
  * @apiError (404) {Object[]} message Utilisateur ou cocktail non trouvé.
  * @apiErrorExample {json} Erreur 404 (utilisateur non trouvé) :
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Utilisateur non trouvé" }
  *       ]
  *     }
- * 
+ *
  * @apiError (404) {Object[]} message Cocktail non trouvé.
  * @apiErrorExample {json} Erreur 404 (cocktail non trouvé) :
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Cocktail non trouvé", "field": "cocktail_id" }
  *       ]
  *     }
- * 
+ *
  */
-router.post('/me/favorites', verifyToken, async (req, res) => {
+router.post("/me/favorites", verifyToken, async (req, res) => {
   try {
     const { cocktail_id } = req.body;
 
     if (!cocktail_id) {
       return res.status(400).json({
-        errors: [{
-          msg: 'L\'ID du cocktail est requis',
-          field: 'cocktail_id'
-        }]
+        errors: [
+          {
+            msg: "L'ID du cocktail est requis",
+            field: "cocktail_id",
+          },
+        ],
       });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(cocktail_id)) {
+    if (
+      typeof cocktail_id !== "string" ||
+      !mongoose.Types.ObjectId.isValid(cocktail_id)
+    ) {
       return res.status(400).json({
-        errors: [{
-          msg: 'ID de cocktail invalide',
-          field: 'cocktail_id'
-        }]
+        errors: [
+          {
+            msg: "ID de cocktail invalide",
+            field: "cocktail_id",
+          },
+        ],
       });
     }
 
     const cocktail = await Cocktail.findById(cocktail_id);
     if (!cocktail) {
       return res.status(404).json({
-        errors: [{
-          msg: 'Cocktail non trouvé',
-          field: 'cocktail_id'
-        }]
+        errors: [
+          {
+            msg: "Cocktail non trouvé",
+            field: "cocktail_id",
+          },
+        ],
       });
     }
 
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({
-      errors: [{
-        msg: 'Utilisateur non trouvé'
-      }]
-    });
+    if (!user)
+      return res.status(404).json({
+        errors: [
+          {
+            msg: "Utilisateur non trouvé",
+          },
+        ],
+      });
 
     if (user.favorites.includes(cocktail_id)) {
       return res.status(400).json({
-        errors: [{
-          msg: 'Ce cocktail est déjà dans vos favoris',
-          field: 'cocktail_id'
-        }]
+        errors: [
+          {
+            msg: "Ce cocktail est déjà dans vos favoris",
+            field: "cocktail_id",
+          },
+        ],
       });
     }
 
@@ -819,10 +881,8 @@ router.post('/me/favorites', verifyToken, async (req, res) => {
     res.status(200).json(user.favorites);
   } catch (error) {
     res.status(500).json({
-      errors: [
-        { msg: error.message }]
-    }
-    );
+      errors: [{ msg: error.message }],
+    });
   }
 });
 
@@ -843,7 +903,7 @@ router.post('/me/favorites', verifyToken, async (req, res) => {
  * @apiSuccessExample {json} Réponse en cas de succès:
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]
  *
  * @apiError (400) {Object[]} errors Erreur de validation
@@ -860,7 +920,7 @@ router.post('/me/favorites', verifyToken, async (req, res) => {
  * @apiErrorExample {json} Erreur 401 (token absent) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé : Aucun token fourni" }
@@ -871,7 +931,7 @@ router.post('/me/favorites', verifyToken, async (req, res) => {
  * @apiErrorExample {json} Erreur 403 (token invalide ou expiré) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Token invalide ou expiré" }
@@ -882,7 +942,7 @@ router.post('/me/favorites', verifyToken, async (req, res) => {
  * @apiErrorExample {json} Erreur 404 (Cocktail ou utilisateur non trouvé):
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [{
  *         "msg": "Cocktail non trouvé",
@@ -891,45 +951,53 @@ router.post('/me/favorites', verifyToken, async (req, res) => {
  *     }
  *
  */
-router.delete('/me/favorites/:cocktailId', verifyToken, async (req, res) => {
+router.delete("/me/favorites/:cocktailId", verifyToken, async (req, res) => {
   try {
     const { cocktailId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(cocktailId)) {
       return res.status(400).json({
-        errors: [{
-          msg: 'ID de cocktail invalide',
-          param: 'cocktailId'
-        }]
+        errors: [
+          {
+            msg: "ID de cocktail invalide",
+            param: "cocktailId",
+          },
+        ],
       });
     }
 
     const cocktail = await Cocktail.findById(cocktailId);
     if (!cocktail) {
       return res.status(404).json({
-        errors: [{
-          msg: 'Cocktail non trouvé',
-          param: 'cocktailId'
-        }]
+        errors: [
+          {
+            msg: "Cocktail non trouvé",
+            param: "cocktailId",
+          },
+        ],
       });
     }
 
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({
-        errors: [{
-          msg: 'Utilisateur non trouvé',
-        }]
+        errors: [
+          {
+            msg: "Utilisateur non trouvé",
+          },
+        ],
       });
     }
 
     const index = user.favorites.indexOf(cocktailId);
     if (index === -1) {
       return res.status(400).json({
-        errors: [{
-          msg: 'Ce cocktail n\'est pas dans vos favoris',
-          param: 'cocktailId'
-        }]
+        errors: [
+          {
+            msg: "Ce cocktail n'est pas dans vos favoris",
+            param: "cocktailId",
+          },
+        ],
       });
     }
 
@@ -938,22 +1006,23 @@ router.delete('/me/favorites/:cocktailId', verifyToken, async (req, res) => {
 
     res.status(200).json(user.favorites);
   } catch (error) {
-    console.error('Erreur suppression favori:', error);
     res.status(500).json({
-      errors: [{
-        msg: 'Erreur interne du serveur',
-            }]
+      errors: [
+        {
+          msg: "Erreur interne du serveur",
+        },
+      ],
     });
   }
 });
 
 /**
- * @api {get} /users/me/favorites Liste des favoris
+ * @api {get} /users/me/favorites Obtenir la liste des cocktails favoris de l'utilisateur connecté
  * @apiName GetFavorites
  * @apiGroup Utilisateurs
  * @apiDescription Récupère la liste complète des favoris de l'utilisateur connecté.
  *
- * @apiHeader {String} Authorization Bearer <token> 
+ * @apiHeader {String} Authorization Bearer <token>
  * @apiHeaderExample {Header} Exemple d'en-tête:
  *     Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *
@@ -966,47 +1035,29 @@ router.delete('/me/favorites/:cocktailId', verifyToken, async (req, res) => {
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
- *     [
- *       {
- *         "_id": "67767c8452c62cf285c32325",
- *         "name": "Old Fashioned",
- *         "description": "Un cocktail classique à base de whisky, de sucre, d'eau et d'amers.",
- *         "instructions": [
- *           "Mélanger le whisky, le sucre, l'eau et les amers",
- *           "Servir avec une tranche d'orange"
- *         ],
- *         "image_url": "https://images.immediate.co.uk/production/volatile/sites/30/2020/08/old-fashioned-5a4bab5.jpg",
- *         "ingredients": [
- *           {
- *             "name": "Whisky",
- *             "quantity": 50,
- *             "unit": "ml"
- *           },
- *           {
- *             "name": "Sucre",
- *             "quantity": 1,
- *             "unit": "morceau"
- *           },
- *           {
- *             "name": "Eau",
- *             "quantity": 10,
- *             "unit": "ml"
- *           },
- *           {
- *             "name": "Amers",
- *             "quantity": 2,
- *             "unit": "traits"
- *           }
- *         ]
- *       }
- *     ]
+ *
+ *       [
+ *         {
+ *           "_id": "6777aa843cd16a9da2b9fb5a",
+ *           "name": "Margarita",
+ *           "image_url": "https://example.com/image.jpg",
+ *           "rank": 4.5,
+ *           "ratingsCount": 3
+ *         },
+ *         {
+ *           "_id": "6777a99ed6a0deaa1226e08a",
+ *           "name": "Old Fashioned",
+ *           "image_url": "https://images.immediate.co.uk/production/volatile/sites/30/2020/08/old-fashioned-5a4bab5.jpg",
+ *           "rank": 0,
+ *           "ratingsCount": 0
+ *         }
+ *       ]
  *
  * @apiError (401) {Object[]} message Aucun token n'a été fourni.
  * @apiErrorExample {json} Erreur 401 (token absent) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé : Aucun token fourni" }
@@ -1017,7 +1068,7 @@ router.delete('/me/favorites/:cocktailId', verifyToken, async (req, res) => {
  * @apiErrorExample {json} Erreur 403 (token invalide ou expiré) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Token invalide ou expiré" }
@@ -1028,62 +1079,100 @@ router.delete('/me/favorites/:cocktailId', verifyToken, async (req, res) => {
  * @apiErrorExample {json} Erreur 404 (Utilisateur non trouvé):
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [{
  *         "msg": "Utilisateur non trouvé",
  *       }]
  *     }
  */
-router.get('/me/favorites', verifyToken, async (req, res) => {
+router.get("/me/favorites", verifyToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate('favorites');
-    if (!user) return res.status(404).json({ errors: [{ msg: 'Utilisateur non trouvé' }] });
+    const user = await User.findById(req.user.id).populate({
+      path: "favorites",
+      select: "name rank image_url ratings",
+    });
+    if (!user)
+      return res
+        .status(404)
+        .json({ errors: [{ msg: "Utilisateur non trouvé" }] });
 
-    res.status(200).json(user.favorites);
+    const cocktailsWithRatingsCount = user.favorites.map((cocktail) => ({
+      ...cocktail._doc,
+      ratingsCount: cocktail.ratings ? cocktail.ratings.length : 0,
+    }));
+
+    res
+      .status(200)
+      .json(cocktailsWithRatingsCount.map(({ ratings, ...rest }) => rest));
   } catch (error) {
     res.status(500).json({
-      errors: [{
-        msg: 'Erreur interne du serveur',
-            }]
+      errors: [
+        {
+          msg: "Erreur interne du serveur",
+        },
+      ],
     });
   }
 });
 
- /**
- * @api {get} /users/me/favorites/:cocktailId/check Vérifier si un cocktail est dans les favoris
- * @apiName CheckFavorite
+/**
+ * @api {get} /users/me/favorites/:id Obtenir un cocktail favori spécifique
+ * @apiName GetFavorite
  * @apiGroup Utilisateurs
- * @apiDescription Vérifie si un cocktail spécifique est dans les favoris de l'utilisateur connecté.
+ * @apiDescription Récupère les détails d'un cocktail favori spécifique de l'utilisateur connecté.
  *
- * @apiHeader {String} Authorization Bearer <token> 
+ * @apiParam {String} id Identifiant unique du cocktail.
+ *
+ * @apiHeader {String} Authorization Bearer <token>
  * @apiHeaderExample {Header} Exemple d'en-tête:
  *     Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *
- * @apiParam {String} cocktailId ID du cocktail à vérifier.
- *
  * @apiExample {curl} Exemple de requête :
- *     curl -X GET "https://elixir-api-st9s.onrender.com/api/users/me/favorites/12345abcd/check" \
+ *     curl -X GET "https://elixir-api-st9s.onrender.com/api/users/me/favorites" \
  *          -H "Authorization: Bearer <token>"
  *
- * @apiSuccess {Boolean} isFavorite Indique si le cocktail est dans les favoris.
+ * @apiExample {curl} Exemple de requête :
+ *     curl -X GET "https://elixir-api-st9s.onrender.com/api/users/me/favorites/12345abcd"
+ *
+ * @apiSuccess {String} _id Identifiant unique du cocktail.
+ * @apiSuccess {String} name Nom du cocktail.
+ * @apiSuccess {String} description Description du cocktail.
+ * @apiSuccess {String[]} instructions Instructions de préparation du cocktail.
+ * @apiSuccess {String} image_url URL de l'image du cocktail.
+ * @apiSuccess {Object[]} ingredients Liste des ingrédients.
+ * @apiSuccess {String} ingredients.name Nom de l'ingrédient.
+ * @apiSuccess {Number} ingredients.quantity Quantité de l'ingrédient.
+ * @apiSuccess {String} ingredients.unit Unité de mesure de l'ingrédient.
+ * @apiSuccess {Number} rank Rang/popularité du cocktail.
+ * @apiSuccess {Number} ratingsCount Nombre total d'évaluations pour ce cocktail.
  *
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     {
- *       "isFavorite": true
+ *       "_id": "12345abcd",
+ *       "name": "Mojito",
+ *       "description": "Un cocktail classique au rhum, menthe et citron vert.",
+ *       "instructions": ["Écraser la menthe...", "Ajouter le rhum...", "Servir."],
+ *       "image_url": "https://example.com/image.jpg",
+ *       "ingredients": [
+ *         { "name": "Rhum", "quantity": 50, "unit": "ml" },
+ *         { "name": "Menthe", "quantity": 10, "unit": "feuilles" }
+ *       ],
+ *       "rank": 5,
+ *       "ratingsCount": 2
  *     }
  *
- * @apiError (400) {Object[]} errors Liste des erreurs de validation, y compris un ID de cocktail invalide.
- * @apiErrorExample {json} Erreur 400 (réponse pour un ID invalide) :
+ * @apiError (400) {Object[]} errors Liste des erreurs de validation.
+ * @apiErrorExample {json} Erreur 400 (ID invalide) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
- *         { "msg": "ID de cocktail invalide", "param": "cocktailId" }
+ *         { "msg": "ID de cocktail invalide", "param": "id" }
  *       ]
  *     }
  *
@@ -1091,7 +1180,7 @@ router.get('/me/favorites', verifyToken, async (req, res) => {
  * @apiErrorExample {json} Erreur 401 (token absent) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé : Aucun token fourni" }
@@ -1102,66 +1191,59 @@ router.get('/me/favorites', verifyToken, async (req, res) => {
  * @apiErrorExample {json} Erreur 403 (token invalide ou expiré) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Token invalide ou expiré" }
  *       ]
  *     }
  *
- * @apiError (404) {Object[]} errors Cocktail ou utilisateur non trouvé.
- * @apiErrorExample {json} Erreur 404 (réponse si le cocktail n'existe pas) :
+ * @apiError (404) {Object[]} errors Cocktail non trouvé dans les favoris de l'utilisateur.
+ * @apiErrorExample {json} Erreur 404 (Cocktail non trouvé) :
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
- *         { "msg": "Cocktail non trouvé", "param": "cocktailId" }
+ *         { "msg": "Cocktail non trouvé dans vos favoris", "param": "id" }
  *       ]
  *     }
- * 
- *
  */
-router.get('/me/favorites/:cocktailId/check', verifyToken, async (req, res) => {
+router.get("/me/favorites/:id", verifyToken, async (req, res) => {
   try {
-    const { cocktailId } = req.params;
+    const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(cocktailId)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        errors: [{
-          msg: 'ID de cocktail invalide',
-          param: 'cocktailId'
-        }]
+        errors: [{ msg: "ID de cocktail invalide", param: "id" }],
       });
     }
 
-    const cocktail = await Cocktail.findById(cocktailId);
-    if (!cocktail) {
+    const user = await User.findById(req.user.id).populate({
+      path: "favorites",
+      match: { _id: id },
+      select:
+        "name description instructions image_url ingredients rank ratings",
+    });
+
+    if (!user || !user.favorites.length) {
       return res.status(404).json({
-        errors: [{
-          msg: 'Cocktail non trouvé',
-          param: 'cocktailId'
-        }]
+        errors: [{ msg: "Cocktail non trouvé dans vos favoris", param: "id" }],
       });
     }
 
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({
-        errors: [{
-          msg: 'Utilisateur non trouvé',
-        }]
-      });
-    }
+    const favorite = user.favorites[0];
+    const { ratings, ...rest } = favorite._doc;
+    const favoriteWithRatingsCount = {
+      ...rest,
+      ratingsCount: ratings ? ratings.length : 0,
+    };
 
-
-    const isFavorite = user.favorites.includes(req.params.cocktailId);
-    res.status(200).json({ isFavorite });
+    res.status(200).json(favoriteWithRatingsCount);
   } catch (error) {
+    console.error("Erreur lors de la vérification du favori:", error);
     res.status(500).json({
-      errors: [{
-        msg: 'Erreur interne du serveur',
-            }]
+      errors: [{ msg: "Erreur interne du serveur" }],
     });
   }
 });

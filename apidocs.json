@@ -1,7 +1,13 @@
 {
     "name": "Elixir API",
     "version": "1.0.0",
-    "description": "I want to drink some Elixir",
+    "description": "L'API Elixir permet de gérer les bars, cocktails et utilisateurs via une interface RESTful. Elle offre des fonctionnalités de création, lecture, modification, et suppression des données. À noter que cette API utilise PATCH pour effectuer les modifications partielles et totales.",
     "title": "Elixir API",
-    "url" : "https://elixir-api-st9s.onrender.com/api"
+    "url" : "https://elixir-api-st9s.onrender.com/api",
+    "order": [
+      "Utilisateurs",
+      "Cocktails",
+      "Bars"
+    ],
+    "theme": "united"
   }

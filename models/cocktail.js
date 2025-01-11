@@ -5,7 +5,7 @@ const ingredientSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     quantity: { type: Number, required: true },
-    unit: { type: String, trim: true } // Unité facultative
+    unit: { type: String, trim: true } 
   },
   { _id: false }
 );
@@ -81,7 +81,6 @@ const cocktailSchema = new mongoose.Schema(
 );
 
 
-// Calcul automatique du rang
 cocktailSchema.methods.calculateRank = function () {
   if (this.ratings.length === 0) {
     this.rank = 0;

@@ -3,17 +3,16 @@ import Cocktail from "../models/cocktail.js";
 import verifyRole from "../middlewares/verifyRole.js";
 import verifyToken from "../middlewares/verifyToken.js";
 import verifyCreator from "../middlewares/verifyCreator.js";
-import { body, validationResult, param } from 'express-validator';
-import mongoose from 'mongoose';
-
+import { body, validationResult, param } from "express-validator";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
 /**
- * @api {get} /cocktails Récupérer une liste de cocktails
+ * @api {get} /cocktails Obtenir une liste de cocktails
  * @apiName GetCocktails
  * @apiGroup Cocktails
- * @apiDescription Récupère une liste de cocktails avec des options de filtrage, tri et pagination. 
+ * @apiDescription Récupère une liste de cocktails avec des options de filtrage, tri et pagination.
  * La réponse inclut uniquement les informations essentielles pour chaque cocktail.
  *
  * @apiQuery {String} [name] Filtrer par nom de cocktail (recherche insensible à la casse).
@@ -42,7 +41,7 @@ const router = express.Router();
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
  *     Link: <https://elixir-api-st9s.onrender.com/api/cocktails?name=a&ingredients=eau,sucre&sort=rank&order=desc&page=2>; rel="next"
- * 
+ *
  *     {
  *       "cocktails": [
  *         {
@@ -68,71 +67,69 @@ const router = express.Router();
  *       }
  *     }
  */
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
-    const { name, ingredients, sort = 'rank', order = 'desc', page = 1 } = req.query;
-    const limit = 12; // Nombre de cocktails par page
+    const {
+      name,
+      ingredients,
+      sort = "rank",
+      order = "desc",
+      page = 1,
+    } = req.query;
+    const limit = 12; 
     const skip = (page - 1) * limit;
 
     let query = {};
 
-    // Filtrer par nom
     if (name) {
-      query.name = { $regex: name, $options: 'i' };
+      query.name = { $regex: name, $options: "i" };
     }
 
-    // Filtrer par ingrédients
     if (ingredients) {
-      const ingredientsArray = ingredients.split(',').map(ing => new RegExp(ing.trim(), 'i'));
-      query['ingredients.name'] = { $all: ingredientsArray };
+      const ingredientsArray = ingredients
+        .split(",")
+        .map((ing) => new RegExp(ing.trim(), "i"));
+      query["ingredients.name"] = { $all: ingredientsArray };
     }
 
-    // Définir l'ordre de tri
     const sortOption = {};
-    const sortOrder = order === 'asc' ? 1 : -1; // Tri ascendant ou descendant
-    if (sort === 'name') {
+    const sortOrder = order === "asc" ? 1 : -1; 
+    if (sort === "name") {
       sortOption.name = sortOrder;
-    } else if (sort === 'rank') {
+    } else if (sort === "rank") {
       sortOption.rank = sortOrder;
-    } else if (sort === 'createdAt') {
+    } else if (sort === "createdAt") {
       sortOption.createdAt = sortOrder;
     }
 
-    // Compter le nombre total de documents correspondant
     const total = await Cocktail.countDocuments(query);
 
-    // Requête pour les cocktails
     const cocktails = await Cocktail.find(query)
-      .select('name rank image_url ratings')
+      .select("name rank image_url ratings")
       .sort(sortOption)
       .skip(skip)
       .limit(limit)
       .lean()
       .exec();
 
-    // Ajouter ratingsCount manuellement
-    const cocktailsWithRatingsCount = cocktails.map(cocktail => ({
+    const cocktailsWithRatingsCount = cocktails.map((cocktail) => ({
       ...cocktail,
-      ratingsCount: cocktail.ratings ? cocktail.ratings.length : 0
+      ratingsCount: cocktail.ratings ? cocktail.ratings.length : 0,
     }));
 
-    // Réponse
     res.status(200).json({
       cocktails: cocktailsWithRatingsCount.map(({ ratings, ...rest }) => rest),
       pagination: {
         page: parseInt(page, 10),
         totalPages: Math.ceil(total / limit),
         totalItems: total,
-        itemsPerPage: limit
-      }
+        itemsPerPage: limit,
+      },
     });
-
   } catch (error) {
-    console.error('Erreur dans la route GET /:', error);
     res.status(500).json({ errors: [{ msg: error.message }] });
   }
 });
-
 
 /**
  * @api {get} /cocktails/:id Obtenir les détails d'un cocktail
@@ -141,7 +138,7 @@ router.get('/', async (req, res) => {
  * @apiDescription Permet de récupérer les informations détaillées d'un cocktail spécifique par son ID.
  *
  * @apiParam {String} id Identifiant unique du cocktail.
- * 
+ *
  * @apiExample {curl} Exemple de requête :
  *     curl -X GET "https://elixir-api-st9s.onrender.com/api/cocktails/12345abcd"
  *
@@ -161,7 +158,7 @@ router.get('/', async (req, res) => {
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "_id": "12345abcd",
  *       "name": "Mojito",
@@ -180,7 +177,7 @@ router.get('/', async (req, res) => {
  * @apiErrorExample {json} Erreur 400 (ID invalide) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "ID de cocktail invalide", "param": "id" }
@@ -191,7 +188,7 @@ router.get('/', async (req, res) => {
  * @apiErrorExample {json} Erreur 404 (Cocktail non trouvé) :
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Cocktail non trouvé", "param": "id" }
@@ -202,16 +199,16 @@ router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Vérifier si l'ID est valide
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         errors: [{ msg: "ID de cocktail invalide", param: "id" }],
       });
     }
 
-    // Rechercher le cocktail
     const cocktail = await Cocktail.findById(id)
-      .select("name description instructions image_url ingredients rank ratings") // Inclure `ratings` pour calculer `ratingsCount`
+      .select(
+        "name description instructions image_url ingredients rank ratings"
+      ) 
       .lean()
       .exec();
 
@@ -221,17 +218,14 @@ router.get("/:id", async (req, res) => {
       });
     }
 
-    // Ajouter ratingsCount manuellement et exclure `ratings`
     const { ratings, ...rest } = cocktail;
     const cocktailWithRatingsCount = {
       ...rest,
-      ratingsCount: ratings ? ratings.length : 0, // Calculer ratingsCount
+      ratingsCount: ratings ? ratings.length : 0,
     };
 
-    // Répondre avec les données
     res.status(200).json(cocktailWithRatingsCount);
   } catch (err) {
-    console.error("Erreur lors de la récupération du cocktail :", err);
     res.status(500).json({
       errors: [{ msg: "Erreur interne du serveur" }],
     });
@@ -246,7 +240,7 @@ router.get("/:id", async (req, res) => {
  *
  * @apiHeader {String} Authorization Bearer <token>
  * @apiHeaderExample {json} Exemple d'en-tête :
- * 
+ *
  *     {
  *       "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *     }
@@ -263,7 +257,7 @@ router.get("/:id", async (req, res) => {
  * @apiExample {json} Exemple de requête :
  *     POST /api/cocktails
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "name": "Margarita",
  *       "description": "Un cocktail classique à base de tequila, de citron vert et de triple sec.",
@@ -296,7 +290,7 @@ router.get("/:id", async (req, res) => {
  *     HTTP/1.1 201 Created
  *     Content-Type: application/json
  *     Location: /api/cocktails/12345abcd
- * 
+ *
  *     {
  *       "message": "Cocktail créé avec succès",
  *       "cocktail": {
@@ -312,7 +306,7 @@ router.get("/:id", async (req, res) => {
  *         "rank": 0
  *         "createdBy": "12345abc"
  *         "createdAt": "2021-07-01T12:00:00.000Z",
- *         "updatedAt": "2021-07-01T12:00:00.000Z"    
+ *         "updatedAt": "2021-07-01T12:00:00.000Z"
  *         "__v": 0
  *       }
  *     }
@@ -333,7 +327,7 @@ router.get("/:id", async (req, res) => {
  * @apiErrorExample {json} Erreur 401 (token absent) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé. Aucun token fourni." }
@@ -344,7 +338,7 @@ router.get("/:id", async (req, res) => {
  * @apiErrorExample {json} Erreur 403 (rôle insuffisant) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé, rôle insuffisant." }
@@ -353,7 +347,7 @@ router.get("/:id", async (req, res) => {
  * @apiErrorExample {json} Erreur 403 (token invalide ou expiré) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Token invalide ou expiré." }
@@ -361,35 +355,33 @@ router.get("/:id", async (req, res) => {
  *     }
  */
 router.post(
-  '/',
+  "/",
   verifyToken,
-  verifyRole('manager', 'admin'),
+  verifyRole("manager", "admin"),
   [
-    body('name')
+    body("name")
       .isLength({ min: 3, max: 100 })
-      .withMessage('Le nom doit contenir entre 3 et 100 caractères'),
-    body('description')
+      .withMessage("Le nom doit contenir entre 3 et 100 caractères"),
+    body("description")
       .isLength({ min: 10, max: 1000 })
-      .withMessage('La description doit contenir entre 10 et 1000 caractères'),
-    body('instructions')
+      .withMessage("La description doit contenir entre 10 et 1000 caractères"),
+    body("instructions")
       .isArray({ min: 1 })
-      .withMessage('Les instructions doivent contenir au moins une étape'),
-    body('image_url')
-      .isURL()
-      .withMessage('L\'URL de l\'image n\'est pas valide'),
-    body('ingredients')
+      .withMessage("Les instructions doivent contenir au moins une étape"),
+    body("image_url").isURL().withMessage("L'URL de l'image n'est pas valide"),
+    body("ingredients")
       .isArray({ min: 1 })
-      .withMessage('Les ingrédients doivent contenir au moins un élément'),
-    body('ingredients.*.name')
+      .withMessage("Les ingrédients doivent contenir au moins un élément"),
+    body("ingredients.*.name")
       .notEmpty()
-      .withMessage('Le nom de l\'ingrédient est obligatoire'),
-    body('ingredients.*.quantity')
+      .withMessage("Le nom de l'ingrédient est obligatoire"),
+    body("ingredients.*.quantity")
       .isFloat({ min: 0.1 })
-      .withMessage('La quantité de l\'ingrédient doit être un nombre positif'),
-    body('ingredients.*.unit')
+      .withMessage("La quantité de l'ingrédient doit être un nombre positif"),
+    body("ingredients.*.unit")
       .optional()
       .isString()
-      .withMessage('L\'unité doit être une chaîne de caractères')
+      .withMessage("L'unité doit être une chaîne de caractères"),
   ],
 
   async (req, res) => {
@@ -403,7 +395,8 @@ router.post(
       });
     }
 
-    const { name, description, instructions, image_url, ingredients } = req.body;
+    const { name, description, instructions, image_url, ingredients } =
+      req.body;
     const createdBy = req.user.id;
 
     try {
@@ -430,23 +423,19 @@ router.post(
         createdAt: cocktail.createdAt,
         updatedAt: cocktail.updatedAt,
         __v: cocktail.__v,
-      };  
+      };
 
       res.status(201).json({
         message: "Cocktail créé avec succès",
         cocktail: orderedResponse,
       });
-      } catch (err) {
-      console.error('Erreur lors de la création du cocktail:', err);
+    } catch (err) {
       res.status(500).json({
-        errors: [{ msg: 'Erreur interne du serveur' }],
+        errors: [{ msg: "Erreur interne du serveur" }],
       });
     }
   }
 );
-
-
-// validation id marche pas
 
 /**
  * @api {patch} /api/cocktails/:id Mettre à jour un cocktail
@@ -473,7 +462,7 @@ router.post(
  * @apiExample {json} Exemple de requête :
  *     PATCH /api/cocktails/12345abcd
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "name": "Updated Margarita",
  *       "description": "Une version améliorée du classique.",
@@ -498,7 +487,7 @@ router.post(
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "message": "Cocktail mis à jour avec succès",
  *       "cocktail": {
@@ -514,7 +503,7 @@ router.post(
  *         "rank": 0
  *         "createdBy": "12345abc"
  *         "createdAt": "2021-07-01T12:00:00.000Z",
- *         "updatedAt": "2021-07-01T12:00:00.000Z"    
+ *         "updatedAt": "2021-07-01T12:00:00.000Z"
  *         "__v": 0
  *       }
  *     }
@@ -523,7 +512,7 @@ router.post(
  * @apiErrorExample {json} Erreur 400 (ID ou données invalides) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "ID de cocktail invalide", "param": "id" },
@@ -535,7 +524,7 @@ router.post(
  * @apiErrorExample {json} Erreur 404 (cocktail introuvable) :
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Cocktail non trouvé", "param": "id" }
@@ -546,7 +535,7 @@ router.post(
  * @apiErrorExample {json} Erreur 401 (token invalide ou absent) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé. Aucun token fourni." }
@@ -557,7 +546,7 @@ router.post(
  * @apiErrorExample {json} Erreur 403 (rôle insuffisant) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé, rôle insuffisant." }
@@ -565,80 +554,82 @@ router.post(
  *     }
  */
 router.patch(
-  '/:id',
+  "/:id",
   verifyToken,
-  verifyRole('manager', 'admin'),
-  verifyCreator('cocktail'),
+  verifyRole("manager", "admin"),
+  verifyCreator("cocktail"),
   [
-    param('id').custom((value) => {
-      if (!mongoose.Types.ObjectId.isValid(value)) {
-        throw new Error('ID de cocktail invalide');
-      }
-      return true;
-    }),
-    body('name')
+    body("name")
       .optional()
       .isLength({ min: 3, max: 100 })
-      .withMessage('Le nom du cocktail doit avoir entre 3 et 100 caractères'),
-    body('description')
+      .withMessage("Le nom du cocktail doit avoir entre 3 et 100 caractères"),
+    body("description")
       .optional()
       .isLength({ min: 10, max: 1000 })
-      .withMessage('La description doit avoir entre 10 et 1000 caractères'),
-    body('instructions')
+      .withMessage("La description doit avoir entre 10 et 1000 caractères"),
+    body("instructions")
       .optional()
       .isArray({ min: 1 })
-      .withMessage('Les instructions doivent être un tableau de chaînes de caractères'),
-    body('image_url')
+      .withMessage(
+        "Les instructions doivent être un tableau de chaînes de caractères"
+      ),
+    body("image_url")
       .optional()
       .isURL()
-      .withMessage('L\'URL de l\'image n\'est pas valide'),
-    body('ingredients')
+      .withMessage("L'URL de l'image n'est pas valide"),
+    body("ingredients")
       .optional()
       .isArray({ min: 1 })
-      .withMessage('Les ingrédients doivent être un tableau contenant au moins un élément'),
-    body('ingredients.*.name')
+      .withMessage(
+        "Les ingrédients doivent être un tableau contenant au moins un élément"
+      ),
+    body("ingredients.*.name")
       .optional({ checkFalsy: true })
       .notEmpty()
-      .withMessage('Le nom de l\'ingrédient est obligatoire'),
-    body('ingredients.*.quantity')
+      .withMessage("Le nom de l'ingrédient est obligatoire"),
+    body("ingredients.*.quantity")
       .optional({ checkFalsy: true })
       .isFloat({ min: 0.1 })
-      .withMessage('La quantité de l\'ingrédient doit être un nombre positif'),
-    body('replaceIngredients')
+      .withMessage("La quantité de l'ingrédient doit être un nombre positif"),
+    body("replaceIngredients")
       .optional()
       .isBoolean()
-      .withMessage('Le paramètre replaceIngredients doit être un booléen')
+      .withMessage("Le paramètre replaceIngredients doit être un booléen"),
   ],
   async (req, res) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
-          errors: errors.array().map(err => ({
+          errors: errors.array().map((err) => ({
             msg: err.msg,
-            field: err.param
-          }))
+            field: err.param,
+          })),
         });
       }
 
-      // Rechercher le cocktail
       const { id } = req.params;
       const cocktail = await Cocktail.findById(id);
       if (!cocktail) {
         return res.status(404).json({
-          errors: [{ msg: 'Cocktail non trouvé', param: 'id' }]
+          errors: [{ msg: "Cocktail non trouvé", param: "id" }],
         });
       }
 
-      const { name, description, instructions, image_url, ingredients, replaceIngredients } = req.body;
+      const {
+        name,
+        description,
+        instructions,
+        image_url,
+        ingredients,
+        replaceIngredients,
+      } = req.body;
 
-      // Mettre à jour les champs
       if (name) cocktail.name = name;
       if (description) cocktail.description = description;
       if (instructions) cocktail.instructions = instructions;
       if (image_url) cocktail.image_url = image_url;
 
-      // Gérer les ingrédients
       if (ingredients) {
         if (replaceIngredients) {
           cocktail.ingredients = ingredients;
@@ -647,10 +638,8 @@ router.patch(
         }
       }
 
-      // Sauvegarder les modifications
       await cocktail.save();
 
-      // Réponse formatée
       const orderedResponse = {
         _id: cocktail._id,
         name: cocktail.name,
@@ -662,23 +651,20 @@ router.patch(
         createdBy: cocktail.createdBy,
         createdAt: cocktail.createdAt,
         updatedAt: cocktail.updatedAt,
-        __v: cocktail.__v
+        __v: cocktail.__v,
       };
 
       res.status(200).json({
-        message: 'Cocktail mis à jour avec succès',
-        cocktail: orderedResponse
+        message: "Cocktail mis à jour avec succès",
+        cocktail: orderedResponse,
       });
     } catch (err) {
-      console.error('Erreur lors de la mise à jour du cocktail :', err);
       res.status(500).json({
-        errors: [{ msg: 'Erreur interne du serveur' }]
+        errors: [{ msg: "Erreur interne du serveur" }],
       });
     }
   }
 );
-
-
 
 /**
  * @api {delete} /api/cocktails/:id Supprimer un cocktail
@@ -689,7 +675,7 @@ router.patch(
  * @apiHeader {String} Authorization Bearer <token>
  * @apiHeaderExample {Header} Exemple d'en-tête :
  *     Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- * 
+ *
  * @apiParam {String} id ID unique du cocktail à supprimer (ObjectId MongoDB valide).
  *
  * @apiExample {curl} Exemple de requête :
@@ -701,7 +687,7 @@ router.patch(
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "message": "Cocktail supprimé avec succès"
  *     }
@@ -710,7 +696,7 @@ router.patch(
  * @apiErrorExample {json} Erreur 400 (ID invalide) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "ID de cocktail invalide.", "param": "id" }
@@ -721,7 +707,7 @@ router.patch(
  * @apiErrorExample {json} Erreur 404 :
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Cocktail non trouvé.", "param": "id" }
@@ -732,7 +718,7 @@ router.patch(
  * @apiErrorExample {json} Erreur 401 (token absent ou invalide) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé. Aucun token fourni." }
@@ -743,7 +729,7 @@ router.patch(
  * @apiErrorExample {json} Erreur 403 (rôle insuffisant) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé, rôle insuffisant." }
@@ -762,32 +748,31 @@ router.delete(
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
-          errors: [{ msg: "ID de cocktail invalide.", param: "id" }]
+          errors: [{ msg: "ID de cocktail invalide.", param: "id" }],
         });
       }
 
       const deletedCocktail = await Cocktail.findByIdAndDelete(id);
       if (!deletedCocktail) {
         return res.status(404).json({
-          errors: [{ msg: "Cocktail non trouvé.", param: "id" }]
+          errors: [{ msg: "Cocktail non trouvé.", param: "id" }],
         });
       }
 
       res.status(200).json({ message: "Cocktail supprimé avec succès." });
     } catch (err) {
-      console.error("Erreur lors de la suppression :", err);
       res.status(500).json({
-        errors: [{ msg: "Erreur interne du serveur." }]
+        errors: [{ msg: "Erreur interne du serveur." }],
       });
     }
   }
 );
 
 /**
- * @api {post} /api/cocktails/:id/rate Noter un cocktail
+ * @api {put} /api/cocktails/:id/ratings Noter un cocktail
  * @apiName RateCocktail
  * @apiGroup Cocktails
- * @apiDescription Ajoute ou met à jour une note pour un cocktail. Accessible uniquement aux utilisateurs connectés.
+ * @api {put} /cocktails/:id/ratings Ajouter ou modifier une note pour un cocktail
  *
  * @apiHeader {String} Authorization Bearer <token>
  * @apiHeaderExample {Header} Exemple d'en-tête :
@@ -800,9 +785,9 @@ router.delete(
  * @apiBody {Number} rating Note entre 1 et 5.
  *
  * @apiExample {json} Exemple de requête :
- *     POST /api/cocktails/63cf9b1cfa8a3c0012345678/rate
+ *     PUT /api/cocktails/63cf9b1cfa8a3c0012345678/ratings
  *     Content-Type: application/json
- * 
+ *
  *     { "rating": 4 }
  *
  * @apiSuccess {String} message Message confirmant l'ajout ou la mise à jour de la note.
@@ -810,7 +795,7 @@ router.delete(
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "message": "Note prise en compte avec succès.",
  *       "rating": 4
@@ -820,7 +805,7 @@ router.delete(
  * @apiErrorExample {json} Erreur 400 (ID ou note invalide) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "ID de cocktail invalide.", "param": "id" },
@@ -832,18 +817,18 @@ router.delete(
  * @apiErrorExample {json} Erreur 401 (token absent ou invalide) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé. Aucun token fourni." }
  *       ]
  *     }
  *
- * @apiError (403) {Object[]} errors Token invalide ou expiré. 
+ * @apiError (403) {Object[]} errors Token invalide ou expiré.
  * @apiErrorExample {json} Erreur 403 (token invalide ou expiré) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- *      
+ *
  *     {
  *       "errors": [
  *         { "msg": "Token invalide ou expiré." }
@@ -854,67 +839,61 @@ router.delete(
  * @apiErrorExample {json} Erreur 404 (Cocktail non trouvé) :
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Cocktail non trouvé.", "param": "id" }
  *       ]
  *     }
  */
+router.put("/:id/ratings", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating } = req.body;
+    const userId = req.user.id;
 
-//peut etre pas restful, probleme ?
-router.post(
-  "/:id/rate",
-  verifyToken,
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { rating } = req.body;
-      const userId = req.user.id;
-
-      // Validation de l'ID
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({
-          errors: [{ msg: "ID de cocktail invalide.", param: "id" }]
-        });
-      }
-
-      // Validation de la note
-      if (!rating || typeof rating !== "number" || rating < 1 || rating > 5) {
-        return res.status(400).json({
-          errors: [{ msg: "La note doit être un nombre entre 1 et 5.", param: "rating" }]
-        });
-      }
-
-      const cocktail = await Cocktail.findById(id);
-      if (!cocktail) {
-        return res.status(404).json({
-          errors: [{ msg: "Cocktail non trouvé.", param: "id" }]
-        });
-      }
-
-      // Vérification et mise à jour de la note
-      const existingRating = cocktail.ratings.find(r => r.user.toString() === userId);
-      if (existingRating) {
-        existingRating.rating = rating;
-      } else {
-        cocktail.ratings.push({ user: userId, rating });
-      }
-
-      // Recalculer le rang
-      cocktail.calculateRank();
-
-      // Sauvegarder les modifications
-      await cocktail.save();
-
-      res.status(200).json({ message: "Note prise en compte avec succès.", rating: rating });
-    } catch (err) {
-      console.error("Erreur lors de la notation :", err);
-      res.status(500).json({
-        errors: [{ msg: "Erreur interne du serveur." }]
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        errors: [{ msg: "ID de cocktail invalide.", param: "id" }],
       });
     }
+
+    if (!rating || typeof rating !== "number" || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        errors: [
+          { msg: "La note doit être un nombre entre 1 et 5.", param: "rating" },
+        ],
+      });
+    }
+
+    const cocktail = await Cocktail.findById(id);
+    if (!cocktail) {
+      return res.status(404).json({
+        errors: [{ msg: "Cocktail non trouvé.", param: "id" }],
+      });
+    }
+
+    const existingRating = cocktail.ratings.find(
+      (r) => r.user.toString() === userId
+    );
+    if (existingRating) {
+      existingRating.rating = rating;
+    } else {
+      cocktail.ratings.push({ user: userId, rating });
+    }
+
+    cocktail.calculateRank();
+
+    await cocktail.save();
+
+    res
+      .status(200)
+      .json({ message: "Note prise en compte avec succès.", rating: rating });
+  } catch (err) {
+    res.status(500).json({
+      errors: [{ msg: "Erreur interne du serveur." }],
+    });
   }
-);
+});
 
 export default router;

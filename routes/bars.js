@@ -1,28 +1,28 @@
-import express from 'express';
-import { body, validationResult, param } from 'express-validator';
-import verifyToken from '../middlewares/verifyToken.js';
-import verifyRole from '../middlewares/verifyRole.js';
-import verifyCreator from '../middlewares/verifyCreator.js';
-import Bar from '../models/bar.js';
-import Message from '../models/message.js';
-import mongoose from 'mongoose';
+import express from "express";
+import { body, validationResult, param } from "express-validator";
+import verifyToken from "../middlewares/verifyToken.js";
+import verifyRole from "../middlewares/verifyRole.js";
+import verifyCreator from "../middlewares/verifyCreator.js";
+import Bar from "../models/bar.js";
+import Message from "../models/message.js";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
 /**
- * @api {get} /bars Liste des bars
+ * @api {get} /bars Obtenir une liste de bars
  * @apiName GetBars
  * @apiGroup Bars
  * @apiDescription Récupère une liste de bars avec des options de filtrage géospatiales et par cocktail.
- * 
+ *
  * @apiQuery {Number} [lat] Latitude pour la recherche géospatiale.
  * @apiQuery {Number} [lng] Longitude pour la recherche géospatiale.
  * @apiQuery {Number} [radius=5000] Rayon de recherche en mètres (par défaut : 5000m).
  * @apiQuery {String} [cocktailId] ID d'un cocktail pour filtrer les bars qui le proposent.
- * 
+ *
  * @apiExample {curl} Exemple de requête :
  *    curl -X GET "https://elixir-api-st9s.onrender.com/api/bars?lat=48.8566&lng=2.3522&radius=10000&cocktailId=64d2c4c4c4f5e52a0d2b9f5a"
- * 
+ *
  * @apiSuccess {Object[]} bars Liste des bars correspondants.
  * @apiSuccess {String} bars._id Identifiant unique du bar.
  * @apiSuccess {String} bars.name Nom du bar.
@@ -31,7 +31,7 @@ const router = express.Router();
  * @apiSuccess {Object} bars.location Localisation du bar.
  * @apiSuccess {String} bars.location.type Type de localisation (toujours "Point").
  * @apiSuccess {Number[]} bars.location.coordinates Coordonnées de localisation [longitude, latitude].
- * 
+ *
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     [
@@ -48,44 +48,44 @@ const router = express.Router();
  *     ]
  *
  */
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const { lat, lng, radius = 5000, cocktailId } = req.query;
     const query = {};
 
-    // Filtrage par localisation
     if (lat && lng) {
       const latitude = parseFloat(lat);
       const longitude = parseFloat(lng);
-      const radianRadius = radius / 6378100; // Conversion du rayon en radians
+      const radianRadius = radius / 6378100;
 
       query.location = {
         $geoWithin: {
-          $centerSphere: [[longitude, latitude], radianRadius]
-        }
+          $centerSphere: [[longitude, latitude], radianRadius],
+        },
       };
     }
 
-    // Filtrage par cocktail
     if (cocktailId) {
       if (!mongoose.Types.ObjectId.isValid(cocktailId)) {
         return res.status(400).json({
-          errors: [{ msg: 'L\'ID de cocktail fourni est invalide.', param: 'cocktailId' }]
+          errors: [
+            {
+              msg: "L'ID de cocktail fourni est invalide.",
+              param: "cocktailId",
+            },
+          ],
         });
       }
       query.cocktails = mongoose.Types.ObjectId(cocktailId);
     }
 
-    // Recherche des bars
     const bars = await Bar.find(query)
-      .select('_id name description image_url location')
+      .select("_id name description image_url location")
       .lean();
 
-    // Réponse
     res.status(200).json(bars);
   } catch (error) {
-    console.error('Erreur lors de la récupération des bars:', error);
-    res.status(500).json({ errors : [{ msg: 'Erreur interne du serveur' }] });
+    res.status(500).json({ errors: [{ msg: "Erreur interne du serveur" }] });
   }
 });
 
@@ -96,7 +96,7 @@ router.get('/', async (req, res) => {
  * @apiDescription Permet de récupérer les informations détaillées d'un bar spécifique par son ID.
  *
  * @apiParam {String} id Identifiant unique du bar.
- * 
+ *
  * @apiExample {curl} Exemple de requête :
  *     curl -X GET "https://elixir-api-st9s.onrender.com/api/bars/12345abcd"
  *
@@ -112,7 +112,7 @@ router.get('/', async (req, res) => {
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "_id": "64d2c4c4c4f5e52a0d2b9f5a",
  *       "name": "Le Bar Moderne",
@@ -132,7 +132,7 @@ router.get('/', async (req, res) => {
  * @apiErrorExample {json} Erreur 400 (ID invalide) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "ID de bar invalide", "param": "id" }
@@ -143,27 +143,25 @@ router.get('/', async (req, res) => {
  * @apiErrorExample {json} Erreur 404 (Bar non trouvé) :
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Bar non trouvé", "param": "id" }
  *       ]
  *     }
  */
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Vérifier si l'ID est valide
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         errors: [{ msg: "ID de bar invalide", param: "id" }],
       });
     }
 
-    // Rechercher le bar
     const bar = await Bar.findById(id)
-      .select("name description image_url location cocktails") // Champs à inclure dans la réponse
+      .select("name description image_url location cocktails") 
       .lean()
       .exec();
 
@@ -173,7 +171,6 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    // Répondre avec les données
     res.status(200).json(bar);
   } catch (err) {
     console.error("Erreur lors de la récupération du bar :", err);
@@ -183,7 +180,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-
 /**
  * @api {post} /bars Créer un nouveau bar
  * @apiName CreateBar
@@ -192,7 +188,7 @@ router.get('/:id', async (req, res) => {
  *
  * @apiHeader {String} Authorization Bearer <token>
  * @apiHeaderExample {json} Exemple d'en-tête :
- * 
+ *
  *     {
  *       "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *     }
@@ -207,7 +203,7 @@ router.get('/:id', async (req, res) => {
  * @apiExample {json} Exemple de requête :
  *     POST /api/bars
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "name": "Le Bar Sympa",
  *       "description": "Un bar sympa dans le quartier",
@@ -234,7 +230,7 @@ router.get('/:id', async (req, res) => {
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 201 Created
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "message": "Bar créé avec succès",
  *       "bar": {
@@ -269,7 +265,7 @@ router.get('/:id', async (req, res) => {
  * @apiErrorExample {json} Erreur 401 (token absent) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé. Aucun token fourni." }
@@ -280,7 +276,7 @@ router.get('/:id', async (req, res) => {
  * @apiErrorExample {json} Erreur 403 (rôle insuffisant) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé, rôle insuffisant." }
@@ -289,7 +285,7 @@ router.get('/:id', async (req, res) => {
  * @apiErrorExample {json} Erreur 403 (token invalide ou expiré) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Token invalide ou expiré." }
@@ -297,31 +293,31 @@ router.get('/:id', async (req, res) => {
  *     }
  */
 router.post(
-  '/',
+  "/",
   verifyToken,
-  verifyRole('manager', 'admin'),
+  verifyRole("manager", "admin"),
   [
-    body('name')
+    body("name")
       .isLength({ min: 3, max: 100 })
-      .withMessage('Le nom doit contenir entre 3 et 100 caractères'),
-    body('description')
+      .withMessage("Le nom doit contenir entre 3 et 100 caractères"),
+    body("description")
       .isLength({ min: 10, max: 1000 })
-      .withMessage('La description doit contenir entre 10 et 1000 caractères'),
-    body('image_url')
-      .isURL()
-      .withMessage('L\'URL de l\'image n\'est pas valide'),
-    body('location.type')
-      .equals('Point')
+      .withMessage("La description doit contenir entre 10 et 1000 caractères"),
+    body("image_url").isURL().withMessage("L'URL de l'image n'est pas valide"),
+    body("location.type")
+      .equals("Point")
       .withMessage('Le type de localisation doit être "Point"'),
-    body('location.coordinates')
+    body("location.coordinates")
       .isArray({ min: 2, max: 2 })
-      .withMessage('Les coordonnées doivent être un tableau contenant exactement deux éléments'),
-    body('location.coordinates[0]')
+      .withMessage(
+        "Les coordonnées doivent être un tableau contenant exactement deux éléments"
+      ),
+    body("location.coordinates[0]")
       .isFloat({ min: -180, max: 180 })
-      .withMessage('La longitude doit être comprise entre -180 et 180'),
-    body('location.coordinates[1]')
+      .withMessage("La longitude doit être comprise entre -180 et 180"),
+    body("location.coordinates[1]")
       .isFloat({ min: -90, max: 90 })
-      .withMessage('La latitude doit être comprise entre -90 et 90')
+      .withMessage("La latitude doit être comprise entre -90 et 90"),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -349,24 +345,22 @@ router.post(
       await bar.save();
 
       res.status(201).json({
-        message: 'Bar créé avec succès',
+        message: "Bar créé avec succès",
         bar,
       });
     } catch (err) {
-      console.error('Erreur lors de la création du bar:', err);
       res.status(500).json({
-        errors: [{ msg: 'Erreur interne du serveur' }],
+        errors: [{ msg: "Erreur interne du serveur" }],
       });
     }
   }
 );
 
-
 /**
- * @api {patch} /api/bars/:id Modifier partiellement un bar
+ * @api {patch} /api/bars/:id Mettre à jour un bar
  * @apiName PatchBar
  * @apiGroup Bars
- * @apiDescription Modifie partiellement un bar existant. Accessible uniquement aux managers et aux administrateurs.
+ * @apiDescription Met à jour les informations d'un bar existant. Accessible uniquement aux managers et aux administrateurs.
  *
  * @apiHeader {String} Authorization Bearer <token>.
  *
@@ -382,7 +376,7 @@ router.post(
  * @apiExample {json} Exemple de requête :
  *     PATCH /api/bars/12345abcd
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "name": "Le Bar Sympa",
  *       "description": "Un bar sympa revisité",
@@ -409,7 +403,7 @@ router.post(
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "message": "Bar mis à jour avec succès",
  *       "bar": {
@@ -432,19 +426,19 @@ router.post(
  * @apiErrorExample {json} Erreur 400 (ID ou données invalides) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Le nom doit contenir entre 3 et 100 caractères", "field": "name" },
  *         { "msg": "Les coordonnées doivent être un tableau valide", "field": "location.coordinates" }
  *       ]
  *     }
- * 
+ *
  * @apiError (401) {Object[]} errors Token non fourni ou invalide.
  * @apiErrorExample {json} Erreur 401 (token invalide ou absent) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé. Aucun token fourni." }
@@ -455,7 +449,7 @@ router.post(
  * @apiErrorExample {json} Erreur 403 (rôle insuffisant) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé, rôle insuffisant." }
@@ -466,7 +460,7 @@ router.post(
  * @apiErrorExample {json} Erreur 404 (bar non trouvé) :
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Bar non trouvé", "param": "id" }
@@ -475,45 +469,39 @@ router.post(
  *
  */
 router.patch(
-  '/:id',
+  "/:id",
   verifyToken,
-  verifyRole('manager', 'admin'),
-  verifyCreator('bar'),
+  verifyRole("manager", "admin"),
+  verifyCreator("bar"),
   [
-    param('id').custom((value) => {
-      if (!mongoose.Types.ObjectId.isValid(value)) {
-        throw new Error('ID de bar invalide');
-      }
-      return true;
-    }),
-    body('name')
+    body("name")
       .optional()
       .isLength({ min: 3, max: 100 })
-      .withMessage('Le nom doit contenir entre 3 et 100 caractères'),
-    body('description')
+      .withMessage("Le nom doit contenir entre 3 et 100 caractères"),
+    body("description")
       .optional()
       .isLength({ min: 10, max: 1000 })
-      .withMessage('La description doit contenir entre 10 et 1000 caractères'),
-    body('image_url')
+      .withMessage("La description doit contenir entre 10 et 1000 caractères"),
+    body("image_url")
       .optional()
       .isURL()
-      .withMessage('L\'URL de l\'image n\'est pas valide'),
-    body('location.type')
+      .withMessage("L'URL de l'image n'est pas valide"),
+    body("location.type")
       .optional()
-      .equals('Point')
+      .equals("Point")
       .withMessage('Le type de localisation doit être "Point"'),
-    body('location.coordinates')
+    body("location.coordinates")
       .optional()
       .isArray({ min: 2, max: 2 })
-      .withMessage('Les coordonnées doivent être un tableau de deux éléments'),
-    body('location.coordinates[0]')
+      .withMessage("Les coordonnées doivent être un tableau de deux éléments"),
+    body("location.coordinates[0]")
       .optional()
       .isFloat({ min: -180, max: 180 })
-      .withMessage('La longitude doit être comprise entre -180 et 180'),
-    body('location.coordinates[1]')
+      .withMessage("La longitude doit être comprise entre -180 et 180"),
+    body("location.coordinates[1]")
       .optional()
       .isFloat({ min: -90, max: 90 })
-      .withMessage('La latitude doit être comprise entre -90 et 90'),
+      .withMessage("La latitude doit être comprise entre -90 et 90"),
   ],
   async (req, res) => {
     try {
@@ -538,18 +526,17 @@ router.patch(
 
       if (!updatedBar) {
         return res.status(404).json({
-          errors: [{ msg: 'Bar non trouvé', param: 'id' }],
+          errors: [{ msg: "Bar non trouvé", param: "id" }],
         });
       }
 
       res.status(200).json({
-        message: 'Bar mis à jour avec succès',
+        message: "Bar mis à jour avec succès",
         bar: updatedBar,
       });
     } catch (err) {
-      console.error('Erreur lors de la mise à jour du bar :', err);
       res.status(500).json({
-        errors: [{ msg: 'Erreur interne du serveur' }],
+        errors: [{ msg: "Erreur interne du serveur" }],
       });
     }
   }
@@ -564,7 +551,7 @@ router.patch(
  * @apiHeader {String} Authorization Bearer <token>
  * @apiHeaderExample {Header} Exemple d'en-tête :
  *     Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- * 
+ *
  * @apiParam {String} id ID unique du bar à supprimer (ObjectId MongoDB valide).
  *
  * @apiExample {curl} Exemple de requête :
@@ -576,7 +563,7 @@ router.patch(
  * @apiSuccessExample {json} Réponse en cas de succès :
  *     HTTP/1.1 200 OK
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "message": "Bar supprimé avec succès"
  *     }
@@ -585,7 +572,7 @@ router.patch(
  * @apiErrorExample {json} Erreur 400 (ID invalide) :
  *     HTTP/1.1 400 Bad Request
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "ID de bar invalide.", "param": "id" }
@@ -597,7 +584,7 @@ router.patch(
  * @apiErrorExample {json} Erreur 401 (token absent ou invalide) :
  *     HTTP/1.1 401 Unauthorized
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé. Aucun token fourni." }
@@ -608,18 +595,18 @@ router.patch(
  * @apiErrorExample {json} Erreur 403 (rôle insuffisant) :
  *     HTTP/1.1 403 Forbidden
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Accès refusé, rôle insuffisant." }
  *       ]
  *     }
- * 
+ *
  * @apiError (404) {Object[]} errors Bar non trouvé.
  * @apiErrorExample {json} Erreur 404 (Bar non trouvé) :
  *     HTTP/1.1 404 Not Found
  *     Content-Type: application/json
- * 
+ *
  *     {
  *       "errors": [
  *         { "msg": "Bar non trouvé.", "param": "id" }
@@ -635,26 +622,23 @@ router.delete(
     try {
       const { id } = req.params;
 
-      // Validation de l'ID
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
-          errors: [{ msg: "ID de bar invalide.", param: "id" }]
+          errors: [{ msg: "ID de bar invalide.", param: "id" }],
         });
       }
 
-      // Recherche et suppression du bar
       const deletedBar = await Bar.findByIdAndDelete(id);
       if (!deletedBar) {
         return res.status(404).json({
-          errors: [{ msg: "Bar non trouvé.", param: "id" }]
+          errors: [{ msg: "Bar non trouvé.", param: "id" }],
         });
       }
 
       res.status(200).json({ message: "Bar supprimé avec succès." });
     } catch (err) {
-      console.error("Erreur lors de la suppression :", err);
       res.status(500).json({
-        errors: [{ msg: "Erreur interne du serveur." }]
+        errors: [{ msg: "Erreur interne du serveur." }],
       });
     }
   }
@@ -730,59 +714,64 @@ router.delete(
  *       ]
  *     }
  */
-router.get('/:id/messages', verifyToken, async (req, res) => {
+router.get("/:id/messages", verifyToken, async (req, res) => {
   try {
     const { lat, lng } = req.query;
 
-    // Vérification des coordonnées
     if (!lat || !lng) {
       return res.status(400).json({
-        errors: [{ msg: 'Latitude et longitude sont requises.', param: 'query' }]
+        errors: [
+          { msg: "Latitude et longitude sont requises.", param: "query" },
+        ],
       });
     }
 
-    // Recherche du bar
     const bar = await Bar.findById(req.params.id);
     if (!bar) {
       return res.status(404).json({
-        errors: [{ msg: 'Bar non trouvé.', param: 'id' }]
+        errors: [{ msg: "Bar non trouvé.", param: "id" }],
       });
     }
 
-    // Calcul de la distance
     const distance = calculateDistance(
       { lat: parseFloat(lat), lng: parseFloat(lng) },
       { lat: bar.location.coordinates[1], lng: bar.location.coordinates[0] }
     );
 
-    if (distance > 0.1) { // Distance supérieure à 100 mètres
+    if (distance > 0.1) {
       return res.status(403).json({
-        errors: [{ msg: 'Vous devez être à moins de 100m du bar pour accéder aux messages.', param: 'distance' }]
+        errors: [
+          {
+            msg: "Vous devez être à moins de 100m du bar pour accéder aux messages.",
+            param: "distance",
+          },
+        ],
       });
     }
 
-    // Récupération des messages
-    const messages = await Message.find({ barId: req.params.id }).sort({ timestamp: 1 });
+    const messages = await Message.find({ barId: req.params.id }).sort({
+      timestamp: 1,
+    });
     res.status(200).json(messages);
   } catch (error) {
-    console.error('Erreur lors de la récupération des messages :', error);
     res.status(500).json({
-      errors: [{ msg: 'Erreur interne du serveur.' }]
+      errors: [{ msg: "Erreur interne du serveur." }],
     });
   }
 });
 
-// Fonction pour calculer la distance entre deux points géographiques
 function calculateDistance(coord1, coord2) {
-  const R = 6371; // Rayon de la Terre en km
+  const R = 6371;
   const dLat = (coord2.lat - coord1.lat) * (Math.PI / 180);
   const dLng = (coord2.lng - coord1.lng) * (Math.PI / 180);
-  const a = 
+  const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(coord1.lat * (Math.PI / 180)) * Math.cos(coord2.lat * (Math.PI / 180)) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    Math.cos(coord1.lat * (Math.PI / 180)) *
+      Math.cos(coord2.lat * (Math.PI / 180)) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c; // Distance en km
+  const distance = R * c;
   return distance;
 }
 
