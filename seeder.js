@@ -43,7 +43,7 @@ async function seedDatabase() {
       Array.from({ length: 100 }).map(async () => {
         const password = await bcrypt.hash(faker.internet.password(), 10);
         const user = new User({
-          username: faker.internet.username().replace(/\./g, '_').replace(/\-/g, '_'),
+          username: faker.internet.username().replace(/\./g, '_').replace(/\-/g, '_').slice(0, 30),
           email: faker.internet.email(),
           password,
           role: 'user'
