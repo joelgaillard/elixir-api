@@ -89,7 +89,7 @@ async function seedDatabase() {
       image_url: 'https://www.shutterstock.com/image-vector/night-bar-club-high-chair-600nw-2304087951.jpg',
       location: {
         type: 'Point',
-        coordinates: [6.928094379999997, 46.99256895999998]
+        coordinates: [46.99256895999998, 6.928094379999997]
       }
     });
     bar.manager = manager._id;

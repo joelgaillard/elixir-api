@@ -5,6 +5,7 @@ import Message from '../models/message.js';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
+
 dotenv.config();
 
 mongoose.connect(process.env.DATABASE_URL)
@@ -16,7 +17,7 @@ const wsServer = new WebSocketServer({ noServer: true });
 const chatRooms = new Map();
 
 wsServer.on('connection', async (ws, request) => {
-  const { searchParams } = new URL(request.url, `http://${request.headers.host}`);
+  const { searchParams } = new URL(request.url, process.env.BASE_URL);
   const chatRoomId = searchParams.get('barId');
   const userId = searchParams.get('userId');
   const token = searchParams.get('token');
