@@ -85,7 +85,7 @@ async function seedDatabase() {
 
     const bar2 = new Bar({
       name: 'Moulins',
-      description: 'Moulins',
+      description: 'Bar au domicile de joel pour faire des tests',
       image_url: 'https://www.shutterstock.com/image-vector/night-bar-club-high-chair-600nw-2304087951.jpg',
       location: {
         type: 'Point',
