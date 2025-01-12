@@ -83,6 +83,19 @@ async function seedDatabase() {
     bar.manager = manager._id;
     await bar.save();
 
+    const bar2 = new Bar({
+      name: 'Moulins',
+      description: 'Moulins',
+      image_url: 'https://www.shutterstock.com/image-vector/night-bar-club-high-chair-600nw-2304087951.jpg',
+      location: {
+        type: 'Point',
+        coordinates: [6.928094379999997, 46.99256895999998]
+      }
+    });
+    bar.manager = manager._id;
+    await bar2.save();
+
+
     const allUsers = [admin, manager, user, ...fakeUsers];
     await Promise.all(
       cocktails.map(async (cocktail) => {
