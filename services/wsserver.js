@@ -31,36 +31,6 @@ wsServer.on('connection', async (ws, request) => {
     return;
   }
 
-  // Vérification du token JWT
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.id !== userId) {
-      ws.send(JSON.stringify({ error: 'Token JWT invalide ou utilisateur non autorisé.' }));
-      ws.close();
-      return;
-    }
-  } catch (err) {
-    console.error('Erreur JWT:', err);
-    ws.send(JSON.stringify({ error: 'Échec de l\'authentification.' }));
-    ws.close();
-    return;
-  }
-
-  // Vérification de la distance entre l'utilisateur et le bar
-  const bar = await Bar.findById(chatRoomId);
-  if (!bar) {
-    ws.send(JSON.stringify({ error: 'Bar introuvable.' }));
-    ws.close();
-    return;
-  }
-
-  const distance = calculateDistance(userLat, userLng, bar.location.coordinates[1], bar.location.coordinates[0]);
-  if (distance > 0.1) {
-    ws.send(JSON.stringify({ error: 'Vous êtes trop loin du bar pour rejoindre ce chat.' }));
-    ws.close();
-    return;
-  }
-
   if (!chatRooms.has(chatRoomId)) {
     chatRooms.set(chatRoomId, new Set());
   }
