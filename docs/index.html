@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>Elixir API</title>
-  <meta name="description" content="L'API Elixir permet de gérer les bars, cocktails et utilisateurs via une interface RESTful. Elle offre des fonctionnalités de création, lecture, modification, et suppression des données. À noter que cette API utilise PATCH pour effectuer les modifications partielles et totales.">
+  <meta name="description" class="desc" content="L'API Elixir permet de gérer les bars, cocktails et utilisateurs via une interface RESTful. Elle offre des fonctionnalités de création, lecture, modification, et suppression des données. À noter que cette API utilise PATCH pour effectuer les modifications partielles et totales.">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <link href="assets/bootstrap.min.css?v=1736872134692" rel="stylesheet" media="screen">
@@ -57,7 +57,7 @@
 <script id="template-project" type="text/x-handlebars-template">
   <div class="pull-left">
     <h1>{{name}}</h1>
-    {{#if description}}<h2>{{{nl2br description}}}</h2>{{/if}}
+    {{#if description}}<h4>{{{nl2br description}}}</h4>{{/if}}
   </div>
   <div class="pull-right">
     {{#if template.withCompare}}
