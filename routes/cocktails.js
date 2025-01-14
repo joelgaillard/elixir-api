@@ -438,7 +438,7 @@ router.post(
 );
 
 /**
- * @api {patch} /api/cocktails/:id Mettre à jour un cocktail
+ * @api {patch} /cocktails/:id Mettre à jour un cocktail
  * @apiName UpdateCocktail
  * @apiGroup Cocktails
  * @apiDescription Met à jour les informations d'un cocktail spécifique. Accessible uniquement aux utilisateurs ayant les rôles `manager` ou `admin`, et uniquement pour les cocktails qu'ils ont créés (sauf pour les administrateurs).
@@ -667,7 +667,7 @@ router.patch(
 );
 
 /**
- * @api {delete} /api/cocktails/:id Supprimer un cocktail
+ * @api {delete} /cocktails/:id Supprimer un cocktail
  * @apiName DeleteCocktail
  * @apiGroup Cocktails
  * @apiDescription Supprime un cocktail spécifique. Accessible uniquement aux utilisateurs ayant les rôles `manager` ou `admin`. Les managers ne peuvent supprimer que leurs propres cocktails.

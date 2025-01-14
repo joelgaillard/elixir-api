@@ -7,7 +7,7 @@
     "order": [
       "Utilisateurs",
       "Cocktails",
-      "Bars"
-    ],
-    "theme": "united"
-  }
+      "Bars",
+      "Ingrédients"
+    ]
+    }

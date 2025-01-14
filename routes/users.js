@@ -369,7 +369,7 @@ router.get("/me", verifyToken, async (req, res) => {
 });
 
 /**
- * @api {patch} /me Mettre à jour les informations de l'utilisateur connecté
+ * @api {patch} /users/me Mettre à jour les informations de l'utilisateur connecté
  * @apiName UpdateUser
  * @apiGroup Utilisateurs
  * @apiDescription Met à jour les informations de l'utilisateur connecté.
@@ -540,7 +540,7 @@ router.patch(
 );
 
 /**
- * @api {delete} /me Supprimer son propre compte
+ * @api {delete} /users/me Supprimer son propre compte
  * @apiName DeleteMyAccount
  * @apiGroup Utilisateurs
  * @apiDescription Permet à un utilisateur connecté de supprimer définitivement son compte.
@@ -659,7 +659,7 @@ router.delete("/me", verifyToken, async (req, res) => {
  *
  *     {
  *       "errors": [
- *         { "msg": "Erreur lors de la suppression de l'utilisateur"
+ *         { "msg": "Erreur lors de la suppression de l'utilisateur" }
  *       ]
  *     }
  *
@@ -1082,7 +1082,7 @@ router.delete("/me/favorites/:cocktailId", verifyToken, async (req, res) => {
  *
  *     {
  *       "errors": [{
- *         "msg": "Utilisateur non trouvé",
+ *         "msg": "Utilisateur non trouvé"
  *       }]
  *     }
  */
@@ -1129,12 +1129,9 @@ router.get("/me/favorites", verifyToken, async (req, res) => {
  *     Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *
  * @apiExample {curl} Exemple de requête :
- *     curl -X GET "https://elixir-api-st9s.onrender.com/api/users/me/favorites" \
- *          -H "Authorization: Bearer <token>"
- *
- * @apiExample {curl} Exemple de requête :
  *     curl -X GET "https://elixir-api-st9s.onrender.com/api/users/me/favorites/12345abcd"
- *
+ *          -H "Authorization: Bearer <token>"
+ * 
  * @apiSuccess {String} _id Identifiant unique du cocktail.
  * @apiSuccess {String} name Nom du cocktail.
  * @apiSuccess {String} description Description du cocktail.

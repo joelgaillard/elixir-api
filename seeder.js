@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import User from './models/user.js';
 import Bar from './models/bar.js';
 import Cocktail from './models/cocktail.js';
+import Message from './models/message.js';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import fs from 'fs';
@@ -10,7 +11,6 @@ import { faker } from '@faker-js/faker';
 dotenv.config();
 
 
-// Connexion à la base de données MongoDB
 mongoose.connect(process.env.DATABASE_URL).then(() => {
   console.log('Connected to MongoDB');
 }).catch((error) => {
@@ -24,13 +24,14 @@ async function seedDatabase() {
     await User.deleteMany({});
     await Bar.deleteMany({});
     await Cocktail.deleteMany({});
+    await Message.deleteMany({});
 
-    // Hacher les mots de passe
+
+    // Créer les utilisateurs
     const adminPassword = await bcrypt.hash('Admin123!', 10);
     const managerPassword = await bcrypt.hash('Manager123!', 10);
     const userPassword = await bcrypt.hash('User123!', 10);
 
-    // Créer les utilisateurs
     const admin = new User({ username: 'admin', email: 'admin@elixir.ch', password: adminPassword, role: 'admin' });
     const manager = new User({ username: 'manager', email: 'manager@elixir.ch', password: managerPassword, role: 'manager' });
     const user = new User({ username: 'user', email: 'user@elixir.ch', password: userPassword, role: 'user' });

@@ -5,10 +5,8 @@ import Message from '../models/message.js';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
-// Chargement des variables d'environnement
 dotenv.config();
 
-// Vérification des variables d'environnement nécessaires
 ['DATABASE_URL', 'JWT_SECRET', 'BASE_URL'].forEach((key) => {
   if (!process.env[key]) {
     console.error(`Variable d'environnement manquante : ${key}`);
@@ -16,7 +14,6 @@ dotenv.config();
   }
 });
 
-// Connexion à MongoDB
 mongoose.connect(process.env.DATABASE_URL)
   .then(() => console.log('MongoDB connecté'))
   .catch(err => {
@@ -27,7 +24,6 @@ mongoose.connect(process.env.DATABASE_URL)
 const wsServer = new WebSocketServer({ noServer: true });
 const chatRooms = new Map();
 
-// Fonction pour calculer la distance entre deux points géographiques
 function calculateDistance(lat1, lng1, lat2, lng2) {
   if (isNaN(lat1) || isNaN(lng1) || isNaN(lat2) || isNaN(lng2)) {
     throw new Error('Coordonnées invalides');
@@ -41,10 +37,8 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
   return R * c;
 }
 
-// Gestion des connexions WebSocket
 wsServer.on('connection', async (ws, request) => {
   try {
-    // Analyse des paramètres de l'URL
     const { searchParams } = new URL(request.url, process.env.BASE_URL);
     const chatRoomId = searchParams.get('barId');
     const userId = searchParams.get('userId');
@@ -52,14 +46,12 @@ wsServer.on('connection', async (ws, request) => {
     const userLat = parseFloat(searchParams.get('lat'));
     const userLng = parseFloat(searchParams.get('lng'));
 
-    // Vérification des paramètres obligatoires
     if (!chatRoomId || !userId || !token || isNaN(userLat) || isNaN(userLng)) {
       ws.send(JSON.stringify({ error: 'Paramètres manquants ou invalides.' }));
       ws.close();
       return;
     }
 
-    // Vérification du token JWT
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       if (decoded.id !== userId) {
@@ -74,7 +66,6 @@ wsServer.on('connection', async (ws, request) => {
       return;
     }
 
-    // Vérification de la distance entre l'utilisateur et le bar
     const bar = await Bar.findById(chatRoomId);
     if (!bar) {
       ws.send(JSON.stringify({ error: 'Bar introuvable.' }));
@@ -89,13 +80,11 @@ wsServer.on('connection', async (ws, request) => {
       return;
     }
 
-    // Gestion des salles de chat
     if (!chatRooms.has(chatRoomId)) {
       chatRooms.set(chatRoomId, new Set());
     }
     chatRooms.get(chatRoomId).add(ws);
 
-    // Gestion des messages envoyés par le client
     ws.on('message', async (data) => {
       try {
         const parsedData = JSON.parse(data);
@@ -112,7 +101,6 @@ wsServer.on('connection', async (ws, request) => {
           content: parsedData.content,
         };
 
-        // Vérifier l'état de la connexion MongoDB
         if (mongoose.connection.readyState !== 1) {
           console.error('MongoDB non connecté');
           ws.send(JSON.stringify({ error: 'Problème de connexion à la base de données.' }));
@@ -143,7 +131,6 @@ wsServer.on('connection', async (ws, request) => {
       }
     });
 
-    // Gestion de la fermeture de la connexion
     ws.on('close', () => {
       const room = chatRooms.get(chatRoomId);
       if (room) {
@@ -155,7 +142,6 @@ wsServer.on('connection', async (ws, request) => {
       console.log(`Utilisateur ${userId} déconnecté du chatRoom ${chatRoomId}`);
     });
 
-    // Gestion des erreurs WebSocket
     ws.on('error', (err) => {
       console.error(`Erreur WebSocket pour utilisateur ${userId}:`, err.message);
       ws.close();

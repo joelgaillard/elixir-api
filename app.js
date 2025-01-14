@@ -29,7 +29,6 @@ mongoose
 // Configuration CORS
 app.use(
   cors({
-    // Configuration CORS
     origin: "https://elixir-icgi.onrender.com",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization", "x-requested-with"],
