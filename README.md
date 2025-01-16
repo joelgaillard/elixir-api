@@ -39,6 +39,17 @@ Démarrer le serveur de développement:
 npm run dev
 ```
 
+Ouvrez votre navigateur et accédez à l'URL spécifiée dans la variable **BASE_URL** de votre fichier **.env** pour consulter la documentation de l'API.
+
+### Exécution des tests
+Pour exécuter les 10 tests réalisés, assurez-vous que la variable **DATABASE_URL** du **script de test** de votre fichier **package.json** corresponde à votre configuration de MongoDB, puis utilisez la commande suivante :
+```bash
+npm run test
+```
+
+
+
+
 
 
 

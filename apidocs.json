@@ -1,7 +1,7 @@
 {
     "name": "Elixir API",
     "version": "1.0.0",
-    "description": "L'API Elixir permet de gérer les bars, cocktails et utilisateurs via une interface RESTful. Elle offre des fonctionnalités de création, lecture, modification, et suppression des données. À noter que cette API utilise PATCH pour effectuer les modifications partielles et totales.",
+    "description": "L'API Elixir permet de gérer les bars, cocktails et utilisateurs via une interface RESTful. Elle offre des fonctionnalités de création, lecture, modification, et suppression des données. Elle dispose également d'une route permettant d'obtenir le nom de tous les ingrédients utilisés dans les cocktails. À noter que cette API utilise PATCH pour effectuer les modifications partielles et totales. Les tokens d'authentification de cette API sont valables pendant une durée de 3 heures.",
     "title": "Elixir API",
     "url" : "https://elixir-api-st9s.onrender.com/api",
     "order": [

@@ -357,7 +357,7 @@ router.post(
 );
 
 /**
- * @api {patch} /api/bars/:id Mettre à jour un bar
+ * @api {patch} /bars/:id Mettre à jour un bar
  * @apiName PatchBar
  * @apiGroup Bars
  * @apiDescription Met à jour les informations d'un bar existant. Accessible uniquement aux managers et aux administrateurs.
@@ -374,7 +374,7 @@ router.post(
  * @apiBody {Number[]} location.coordinates Coordonnées [longitude, latitude].
  *
  * @apiExample {json} Exemple de requête :
- *     PATCH /api/bars/12345abcd
+ *     PATCH /bars/12345abcd
  *     Content-Type: application/json
  *
  *     {
@@ -543,7 +543,7 @@ router.patch(
 );
 
 /**
- * @api {delete} /api/bars/:id Supprimer un bar
+ * @api {delete} /bars/:id Supprimer un bar
  * @apiName DeleteBar
  * @apiGroup Bars
  * @apiDescription Supprime un bar spécifique. Accessible uniquement aux utilisateurs ayant les rôles `manager` ou `admin`. Les managers ne peuvent supprimer que leurs propres bars.

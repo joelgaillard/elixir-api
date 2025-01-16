@@ -769,10 +769,10 @@ router.delete(
 );
 
 /**
- * @api {put} /api/cocktails/:id/ratings Noter un cocktail
+ * @api {put} /cocktails/:id/ratings Noter un cocktail
  * @apiName RateCocktail
  * @apiGroup Cocktails
- * @api {put} /cocktails/:id/ratings Ajouter ou modifier une note pour un cocktail
+ * @apiDescription Permet à un utilisateur authentifié de noter un cocktail spécifique sur une échelle de 1 à 5.
  *
  * @apiHeader {String} Authorization Bearer <token>
  * @apiHeaderExample {Header} Exemple d'en-tête :

@@ -31,7 +31,7 @@ function generateToken(user) {
  * @apiName CreateUser
  * @apiGroup Utilisateurs
  * @apiDescription Crée un nouvel utilisateur avec un rôle par défaut `user`, ou `manager` si l'utilisateur connecté est un administrateur.
- *
+ * 
  * @apiHeader {String} [Authorization] Bearer <token> (optionnel)
  * @apiHeaderExample {json} Exemple d'en-tête :
  *     {
@@ -540,7 +540,7 @@ router.patch(
 );
 
 /**
- * @api {delete} /users/me Supprimer son propre compte
+ * @api {delete} /users/me Supprimer son propre compte (utilisateur connecté)
  * @apiName DeleteMyAccount
  * @apiGroup Utilisateurs
  * @apiDescription Permet à un utilisateur connecté de supprimer définitivement son compte.
@@ -627,7 +627,7 @@ router.delete("/me", verifyToken, async (req, res) => {
 });
 
 /**
- * @api {delete} /users/:id Supprimer un utilisateur (par un administrateur)
+ * @api {delete} /users/:id Supprimer un utilisateur (par un administrateur connecté)
  * @apiName DeleteUserByAdmin
  * @apiGroup Utilisateurs
  * @apiDescription Permet à un administrateur de supprimer un utilisateur spécifique par son ID.
@@ -727,7 +727,7 @@ router.delete("/:id", verifyToken, verifyRole("admin"), async (req, res) => {
 });
 
 /**
- * @api {post} /users/me/favorites Ajouter un cocktail en favoris
+ * @api {post} /users/me/favorites Ajouter un cocktail en favoris de l'utilisateur connecté
  * @apiName AddFavorite
  * @apiGroup Utilisateurs
  * @apiDescription Ajoute un cocktail aux favoris de l'utilisateur connecté.
@@ -887,7 +887,7 @@ router.post("/me/favorites", verifyToken, async (req, res) => {
 });
 
 /**
- * @api {delete} /users/me/favorites/:cocktailId Supprimer un cocktail des favoris
+ * @api {delete} /users/me/favorites/:cocktailId Supprimer un cocktail des favoris de l'utilisateur connecté
  * @apiName RemoveFavorite
  * @apiGroup Utilisateurs
  * @apiDescription Permet à un utilisateur de retirer un cocktail de ses favoris
@@ -1117,7 +1117,7 @@ router.get("/me/favorites", verifyToken, async (req, res) => {
 });
 
 /**
- * @api {get} /users/me/favorites/:id Obtenir un cocktail favori spécifique
+ * @api {get} /users/me/favorites/:id Obtenir un cocktail favori spécifique de l'utilisateur connecté
  * @apiName GetFavorite
  * @apiGroup Utilisateurs
  * @apiDescription Récupère les détails d'un cocktail favori spécifique de l'utilisateur connecté.
